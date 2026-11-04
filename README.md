@@ -1,6 +1,6 @@
 # ShopEase — Full-Stack E-Commerce Platform
 
-ShopEase is a modern, full-stack E-Commerce web application built with **Next.js (TypeScript & Tailwind CSS)** for the frontend and **Python (Django REST Framework & JWT)** for the backend.
+ShopEase is a modern, full-stack E-Commerce web application built with **Next.js (TypeScript & Tailwind CSS)** for the frontend and **Python (Flask REST API & JWT)** for the backend (with alternative Django REST support).
 
 ---
 
@@ -53,21 +53,14 @@ shopease/
 │       └── App.tsx
 │
 └── backend/
-    ├── config/
-    │   ├── settings.py
-    │   ├── urls.py
-    │   ├── wsgi.py
-    │   └── asgi.py
-    ├── apps/
-    │   ├── accounts/     # Custom User, Profile, JWT Auth, Address Book
-    │   ├── categories/   # Product Categories with image and slug
-    │   ├── products/     # Product Catalog, Stock, Gallery, Search & Filter
-    │   ├── cart/         # Shopping Cart (Guest & Authenticated Sync)
-    │   ├── orders/       # Order processing, status tracking, items
-    │   ├── payments/     # Payment handling (COD, ABA KHQR, Card, PayPal)
-    │   ├── reviews/      # Product reviews, star ratings & verified purchase
-    │   └── coupons/      # Promo coupon validation & discounts
-    ├── media/
+    ├── app.py                # Primary Flask REST API Server
+    ├── database.py           # Flask SQLAlchemy setup
+    ├── flask_models.py       # User, Product, Category, Cart, Order, Coupon, Review models
+    ├── flask_seed.py         # Automatic seeding of demo catalog & accounts
+    ├── test_flask_api.py     # Automated test suite (12 tests)
+    ├── shopease_flask.db     # SQLite Database
+    ├── config/               # Django REST configuration (Alternative)
+    ├── apps/                 # Django Apps
     ├── manage.py
     └── requirements.txt
 ```
@@ -76,26 +69,20 @@ shopease/
 
 ## ⚡ Quick Start Guide
 
-### 1. Backend (Django REST Framework)
+### 1. Launch with One Click
+Double click `start_all.bat` or `start_backend.bat` in `shopease/` folder!
+
+### 2. Manual Start: Backend (Python Flask)
 
 ```powershell
 # In terminal 1 (Backend):
 cd d:\E-COM\shopease\backend
 
-# Activate virtual environment
-..\..\venv\Scripts\activate
-
-# Run database migrations (already applied)
-python manage.py migrate
-
-# Populate sample products, categories, coupons, and demo accounts (already seeded)
-python manage.py seed_data
-
-# Start backend server
-python manage.py runserver 127.0.0.1:8000
+# Run Flask backend server
+..\..\venv\Scripts\python.exe app.py
 ```
 - API Base URL: `http://127.0.0.1:8000/api/`
-- Django Admin: `http://127.0.0.1:8000/admin/`
+- Dashboard / Health: `http://127.0.0.1:8000/`
 
 ---
 

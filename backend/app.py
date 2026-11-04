@@ -9,7 +9,7 @@ from flask_jwt_extended import (
     jwt_required, get_jwt_identity, decode_token
 )
 from database import db
-from flask_mysql_models import (
+from flask_models import (
     User, Category, Product, Order, Cart, CartItem, Coupon, Review, parse_json
 )
 
@@ -24,7 +24,6 @@ def create_app():
         'mysql+pymysql://root:@127.0.0.1:3306/shopease_db?charset=utf8mb4'
     )
     
-    # Try MySQL first; fallback to SQLite if MySQL is offline
     app.config['SQLALCHEMY_DATABASE_URI'] = mysql_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'shopease-flask-jwt-super-secret-key-2026'
@@ -81,6 +80,21 @@ def create_app():
         except Exception:
             pass
         return None
+
+    def find_product(identifier):
+        if not identifier:
+            return None
+        val = str(identifier).strip()
+        # 1. Direct ID lookup ('prod-1')
+        p = db.session.get(Product, val)
+        if p:
+            return p
+        # 2. Lookup with 'prod-' prefix if passed as numeric ('1')
+        p = db.session.get(Product, f"prod-{val}")
+        if p:
+            return p
+        # 3. Lookup by slug
+        return Product.query.filter_by(slug=val).first()
 
     def get_current_cart():
         user = get_user_from_jwt()
@@ -545,10 +559,7 @@ def create_app():
 
     @app.route('/api/products/<slug_or_id>/', methods=['GET', 'PATCH', 'DELETE'])
     def product_detail(slug_or_id):
-        product = Product.query.filter(
-            (Product.slug == slug_or_id) |
-            (Product.id == slug_or_id)
-        ).first()
+        product = find_product(slug_or_id)
 
         if not product:
             return jsonify({'detail': 'Product not found.'}), 404
@@ -607,16 +618,16 @@ def create_app():
     def add_to_cart():
         cart = get_current_cart()
         data = request.get_json() or {}
-        prod_id = str(data.get('product_id', ''))
+        prod_identifier = str(data.get('product_id', '')).strip()
         try:
             quantity = max(1, int(data.get('quantity', 1)))
         except (ValueError, TypeError):
             quantity = 1
 
-        if not prod_id:
+        if not prod_identifier:
             return jsonify({'detail': 'product_id is required.'}), 400
 
-        product = db.session.get(Product, prod_id) or Product.query.filter_by(slug=prod_id).first()
+        product = find_product(prod_identifier)
         if not product:
             return jsonify({'detail': 'Product not found.'}), 404
 
@@ -838,7 +849,7 @@ def create_app():
             # Prepare items list JSON for MySQL orders table
             order_items_json = []
             for item in cart.items:
-                prod = Product.query.get(item.product_id)
+                prod = db.session.get(Product, item.product_id)
                 if not prod:
                     continue
                 p_dict = prod.to_dict()
@@ -965,10 +976,7 @@ def create_app():
     # --------------------------------------------------------------------------
     @app.route('/api/reviews/product/<slug_or_id>/', methods=['GET', 'POST'])
     def product_reviews(slug_or_id):
-        product = Product.query.filter(
-            (Product.slug == slug_or_id) |
-            (Product.id == slug_or_id)
-        ).first()
+        product = find_product(slug_or_id)
 
         if not product:
             return jsonify({'detail': 'Product not found.'}), 404
@@ -989,8 +997,8 @@ def create_app():
 
             try:
                 review = Review(
-                    product_id=product.id,
-                    user_id=user.id if user else None,
+                    product_id=str(product.id),
+                    user_id=str(user.id) if user else None,
                     reviewer_name=reviewer_name,
                     rating=min(5, max(1, rating)),
                     title=data.get('title', ''),
@@ -1005,6 +1013,7 @@ def create_app():
                 if all_revs:
                     product.rating = round(sum(r.rating for r in all_revs) / len(all_revs), 2)
                     product.review_count = len(all_revs)
+                    product.reviews_list = json.dumps([r.to_dict() for r in all_revs])
 
                 db.session.commit()
                 return jsonify(review.to_dict()), 201

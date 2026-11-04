@@ -1,9 +1,10 @@
 @echo off
-title ShopEase Backend (Flask REST API)
+title ShopEase Backend (Flask + MySQL)
 echo ========================================================
-echo   Starting ShopEase Backend Server (Python Flask API)
-echo   Local:   http://127.0.0.1:8000
-echo   Network: http://localhost:8000
+echo   Starting ShopEase Backend Server (Flask REST API)
+echo   Database: MySQL shopease_db (phpMyAdmin / XAMPP)
+echo   Local:    http://127.0.0.1:8000
+echo   Network:  http://localhost:8000
 echo ========================================================
 cd /d "%~dp0backend"
 "%~dp0..\venv\Scripts\python.exe" app.py

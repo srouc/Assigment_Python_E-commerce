@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 from datetime import datetime, timedelta, timezone
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
@@ -8,19 +9,23 @@ from flask_jwt_extended import (
     jwt_required, get_jwt_identity, decode_token
 )
 from database import db
-from flask_models import (
-    User, Address, Category, Product, ProductImage,
-    Cart, CartItem, Order, OrderItem, Payment, Review, Coupon
+from flask_mysql_models import (
+    User, Category, Product, Order, Cart, CartItem, Coupon, Review, parse_json
 )
-from flask_seed import seed_database, slugify
 
 def create_app():
     app = Flask(__name__)
 
-    # Configuration
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    db_path = os.path.join(base_dir, 'shopease_flask.db').replace('\\', '/')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    # --------------------------------------------------------------------------
+    # Database Configuration: MySQL (phpMyAdmin / XAMPP)
+    # --------------------------------------------------------------------------
+    mysql_uri = os.environ.get(
+        'DATABASE_URL',
+        'mysql+pymysql://root:@127.0.0.1:3306/shopease_db?charset=utf8mb4'
+    )
+    
+    # Try MySQL first; fallback to SQLite if MySQL is offline
+    app.config['SQLALCHEMY_DATABASE_URI'] = mysql_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'shopease-flask-jwt-super-secret-key-2026'
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
@@ -53,12 +58,10 @@ def create_app():
         except Exception:
             pass
 
-    # Auto create tables and seed demo data if empty
+    # Ensure tables exist in MySQL
     with app.app_context():
         try:
             db.create_all()
-            if Category.query.count() == 0 or User.query.count() == 0:
-                seed_database()
         except Exception as e:
             print(f"[!] Database initialization notice: {e}")
 
@@ -74,7 +77,7 @@ def create_app():
                     decoded = decode_token(token)
                     identity = decoded.get('sub')
                     if identity:
-                        return db.session.get(User, int(identity))
+                        return db.session.get(User, str(identity))
         except Exception:
             pass
         return None
@@ -135,7 +138,7 @@ def create_app():
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>ShopEase Backend (Flask REST API)</title>
+          <title>ShopEase Backend (Flask + MySQL)</title>
           <script src="https://cdn.tailwindcss.com"></script>
         </head>
         <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6">
@@ -147,11 +150,11 @@ def create_app():
                 </div>
                 <div>
                   <h1 class="text-2xl font-bold text-white tracking-tight">ShopEase Flask API</h1>
-                  <p class="text-sm text-slate-400">High-Performance Python Flask Backend</p>
+                  <p class="text-sm text-slate-400">Connected to MySQL: <span class="text-indigo-400 font-mono">shopease_db</span> (phpMyAdmin)</p>
                 </div>
               </div>
               <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Running
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> MySQL Connected
               </span>
             </div>
 
@@ -168,14 +171,15 @@ def create_app():
                 <div class="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Test Credentials</div>
                 <div class="text-xs space-y-1 text-slate-300">
                   <p><strong class="text-indigo-400">Admin:</strong> admin@shopease.com / admin123</p>
-                  <p><strong class="text-emerald-400">Customer:</strong> customer@shopease.com / customer123</p>
+                  <p><strong class="text-emerald-400">Customer:</strong> customer@example.com / 123456</p>
+                  <p><strong class="text-emerald-400">Customer 2:</strong> customer@shopease.com / customer123</p>
                   <p><strong class="text-amber-400">Coupons:</strong> WELCOME10, SUPER20, SAVE15</p>
                 </div>
               </div>
             </div>
 
             <div class="border-t border-slate-700 pt-6">
-              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Core REST API Endpoints</h2>
+              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Live REST API Endpoints</h2>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                 <a href="/api/categories/" target="_blank" class="p-2.5 rounded-lg bg-slate-900/40 hover:bg-slate-700/50 border border-slate-700/40 transition block">
                   <span class="text-emerald-400 font-mono font-bold">GET</span> /api/categories/
@@ -210,9 +214,6 @@ def create_app():
         if not user or not user.check_password(password):
             return jsonify({'detail': 'Invalid email or password.'}), 401
 
-        if not user.is_active:
-            return jsonify({'detail': 'This account has been deactivated.'}), 403
-
         access = create_access_token(identity=str(user.id))
         refresh = create_refresh_token(identity=str(user.id))
 
@@ -240,10 +241,18 @@ def create_app():
             return jsonify({'detail': 'A user with this email already exists.'}), 400
 
         try:
+            name_parts = full_name.split(' ', 1)
+            f_name = name_parts[0] if name_parts else ''
+            l_name = name_parts[1] if len(name_parts) > 1 else ''
+
             user = User(
+                id=f"user-{uuid.uuid4().hex[:8]}",
+                first_name=f_name,
+                last_name=l_name,
                 email=email,
-                full_name=full_name,
-                phone_number=phone_number
+                phone=phone_number,
+                role='customer',
+                avatar='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
             )
             user.set_password(password)
             db.session.add(user)
@@ -272,8 +281,8 @@ def create_app():
         try:
             decoded = decode_token(refresh_raw)
             user_id = decoded.get('sub')
-            user = db.session.get(User, int(user_id)) if user_id else None
-            if not user or not user.is_active:
+            user = db.session.get(User, str(user_id)) if user_id else None
+            if not user:
                 return jsonify({'detail': 'User not found or inactive.'}), 401
 
             new_access = create_access_token(identity=str(user.id))
@@ -285,7 +294,7 @@ def create_app():
     @jwt_required()
     def user_profile():
         user_id = get_jwt_identity()
-        user = db.session.get(User, int(user_id)) if user_id else None
+        user = db.session.get(User, str(user_id)) if user_id else None
         if not user:
             return jsonify({'detail': 'User not found.'}), 404
 
@@ -293,9 +302,11 @@ def create_app():
             data = request.get_json() or {}
             try:
                 if 'full_name' in data:
-                    user.full_name = data['full_name'].strip()
+                    name_parts = data['full_name'].strip().split(' ', 1)
+                    user.first_name = name_parts[0]
+                    user.last_name = name_parts[1] if len(name_parts) > 1 else ''
                 if 'phone_number' in data:
-                    user.phone_number = data['phone_number'].strip()
+                    user.phone = data['phone_number'].strip()
                 if 'avatar' in data:
                     user.avatar = data['avatar']
                 db.session.commit()
@@ -309,36 +320,68 @@ def create_app():
     @jwt_required()
     def user_addresses():
         user_id = get_jwt_identity()
-        user = db.session.get(User, int(user_id)) if user_id else None
+        user = db.session.get(User, str(user_id)) if user_id else None
         if not user:
             return jsonify({'detail': 'User not found.'}), 404
+
+        addrs = parse_json(user.addresses, [])
+        if not isinstance(addrs, list):
+            addrs = []
 
         if request.method == 'POST':
             data = request.get_json() or {}
             try:
-                if data.get('is_default'):
-                    for addr in user.addresses:
-                        addr.is_default = False
+                is_def = bool(data.get('is_default', len(addrs) == 0))
+                if is_def:
+                    for a in addrs:
+                        a['isDefault'] = False
 
-                address = Address(
-                    user_id=user.id,
-                    full_name=data.get('full_name', user.name),
-                    phone_number=data.get('phone_number', user.phone_number or ''),
-                    street_address=data.get('street_address', ''),
-                    city=data.get('city', 'Phnom Penh'),
-                    state=data.get('state', ''),
-                    postal_code=data.get('postal_code', ''),
-                    country=data.get('country', 'Cambodia'),
-                    is_default=bool(data.get('is_default', len(user.addresses) == 0))
-                )
-                db.session.add(address)
+                new_addr = {
+                    'id': f"addr-{uuid.uuid4().hex[:6]}",
+                    'firstName': user.first_name,
+                    'lastName': user.last_name,
+                    'email': user.email,
+                    'phone': data.get('phone_number') or user.phone or '',
+                    'address': data.get('street_address', ''),
+                    'city': data.get('city', 'Phnom Penh'),
+                    'province': data.get('state', 'Phnom Penh'),
+                    'postalCode': data.get('postal_code', '12000'),
+                    'country': data.get('country', 'Cambodia'),
+                    'isDefault': is_def
+                }
+                addrs.append(new_addr)
+                user.addresses = json.dumps(addrs)
                 db.session.commit()
-                return jsonify(address.to_dict()), 201
+
+                return jsonify({
+                    'id': new_addr['id'],
+                    'full_name': f"{new_addr['firstName']} {new_addr['lastName']}".strip(),
+                    'phone_number': new_addr['phone'],
+                    'street_address': new_addr['address'],
+                    'city': new_addr['city'],
+                    'state': new_addr['province'],
+                    'postal_code': new_addr['postalCode'],
+                    'country': new_addr['country'],
+                    'is_default': new_addr['isDefault']
+                }), 201
             except Exception as e:
                 db.session.rollback()
                 return jsonify({'detail': f'Failed to create address: {str(e)}'}), 500
 
-        return jsonify([addr.to_dict() for addr in user.addresses]), 200
+        formatted = []
+        for a in addrs:
+            formatted.append({
+                'id': a.get('id', 1),
+                'full_name': f"{a.get('firstName', '')} {a.get('lastName', '')}".strip() or user.name,
+                'phone_number': a.get('phone') or user.phone or '',
+                'street_address': a.get('address', ''),
+                'city': a.get('city', 'Phnom Penh'),
+                'state': a.get('province', ''),
+                'postal_code': a.get('postalCode', ''),
+                'country': a.get('country', 'Cambodia'),
+                'is_default': bool(a.get('isDefault', False))
+            })
+        return jsonify(formatted), 200
 
     # --------------------------------------------------------------------------
     # Categories Endpoints (/api/categories/...)
@@ -347,7 +390,7 @@ def create_app():
     def categories():
         if request.method == 'POST':
             user = get_user_from_jwt()
-            if not user or not (user.is_admin_user or user.is_staff):
+            if not user or not user.is_admin_user:
                 return jsonify({'detail': 'Admin privileges required.'}), 403
 
             data = request.get_json() or {}
@@ -355,20 +398,18 @@ def create_app():
             if not name:
                 return jsonify({'detail': 'Category name is required.'}), 400
 
-            cat_slug = data.get('slug') or slugify(name)
-            base_slug = cat_slug
-            counter = 1
-            while Category.query.filter_by(slug=cat_slug).first():
-                cat_slug = f"{base_slug}-{counter}"
-                counter += 1
+            cat_slug = (data.get('slug') or name.lower().replace(' ', '-')).strip()
+            cat_id = f"cat-{uuid.uuid4().hex[:6]}"
 
             try:
                 cat = Category(
+                    id=cat_id,
                     name=name,
                     slug=cat_slug,
                     description=data.get('description', ''),
-                    image_url=data.get('image_url') or 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500',
-                    icon=data.get('icon', 'Layers')
+                    image=data.get('image_url') or data.get('image') or 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500',
+                    icon=data.get('icon', 'Tag'),
+                    product_count=0
                 )
                 db.session.add(cat)
                 db.session.commit()
@@ -377,7 +418,7 @@ def create_app():
                 db.session.rollback()
                 return jsonify({'detail': f'Failed to create category: {str(e)}'}), 500
 
-        cats = Category.query.filter_by(is_active=True).all()
+        cats = Category.query.all()
         return jsonify([c.to_dict() for c in cats]), 200
 
     # --------------------------------------------------------------------------
@@ -387,7 +428,7 @@ def create_app():
     def products():
         if request.method == 'POST':
             user = get_user_from_jwt()
-            if not user or not (user.is_admin_user or user.is_staff):
+            if not user or not user.is_admin_user:
                 return jsonify({'detail': 'Admin privileges required.'}), 403
 
             data = request.form.to_dict() if request.form else (request.get_json() or {})
@@ -395,20 +436,10 @@ def create_app():
             if not name:
                 return jsonify({'detail': 'Product name is required.'}), 400
 
-            cat_id = data.get('category') or data.get('category_id')
-            p_slug = data.get('slug') or slugify(name)
-            base_slug = p_slug
-            counter = 1
-            while Product.query.filter_by(slug=p_slug).first():
-                p_slug = f"{base_slug}-{counter}"
-                counter += 1
-
-            sku = data.get('sku') or f"SKU-{uuid.uuid4().hex[:6].upper()}"
-            base_sku = sku
-            counter = 1
-            while Product.query.filter_by(sku=sku).first():
-                sku = f"{base_sku}-{counter}"
-                counter += 1
+            cat_name = data.get('category_name') or data.get('category') or 'Electronics'
+            cat_slug = data.get('category_slug') or cat_name.lower().replace(' ', '-')
+            p_slug = data.get('slug') or name.lower().replace(' ', '-')
+            p_id = f"prod-{uuid.uuid4().hex[:6]}"
 
             try:
                 price_val = float(data.get('price', 0.0))
@@ -427,20 +458,26 @@ def create_app():
             except (ValueError, TypeError):
                 stock_val = 10
 
+            img_url = data.get('main_image_url') or 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800'
+            images_json = json.dumps([img_url])
+
             try:
                 product = Product(
+                    id=p_id,
                     name=name,
                     slug=p_slug,
-                    category_id=int(cat_id) if cat_id else 1,
+                    category=cat_name,
+                    category_slug=cat_slug,
                     brand=data.get('brand', ''),
-                    short_description=data.get('short_description', ''),
-                    description=data.get('description', ''),
+                    description=data.get('short_description') or data.get('description', ''),
+                    full_description=data.get('description', ''),
                     price=price_val,
-                    compare_at_price=compare_at,
-                    stock_quantity=stock_val,
-                    sku=sku,
+                    original_price=compare_at,
+                    stock=stock_val,
+                    images=images_json,
                     is_featured=str(data.get('is_featured')).lower() in ['true', '1'],
-                    main_image_url=data.get('main_image_url') or 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800'
+                    rating=5.0,
+                    review_count=0
                 )
                 db.session.add(product)
                 db.session.commit()
@@ -456,20 +493,15 @@ def create_app():
         min_price = request.args.get('min_price')
         max_price = request.args.get('max_price')
         sort = request.args.get('sort', 'newest')
-        is_admin = request.args.get('admin')
 
         query = Product.query
-        if str(is_admin).lower() not in ['true', '1']:
-            query = query.filter_by(is_active=True)
 
         # Filter category (skip 'all', 'undefined', 'null')
         if category and category not in ['all', 'undefined', 'null', 'None', '']:
-            cat = Category.query.filter(
-                (Category.slug == category) |
-                (Category.id == int(category) if category.isdigit() else False)
-            ).first()
-            if cat:
-                query = query.filter(Product.category_id == cat.id)
+            query = query.filter(
+                (Product.category_slug == category) |
+                (Product.category.ilike(f"%{category}%"))
+            )
 
         if search and search not in ['undefined', 'null', 'None', '']:
             search_term = f"%{search.strip().lower()}%"
@@ -477,12 +509,12 @@ def create_app():
                 db.or_(
                     db.func.lower(Product.name).ilike(search_term),
                     db.func.lower(Product.brand).ilike(search_term),
-                    db.func.lower(Product.short_description).ilike(search_term)
+                    db.func.lower(Product.description).ilike(search_term)
                 )
             )
 
         if featured and str(featured).lower() in ['true', '1']:
-            query = query.filter_by(is_featured=True)
+            query = query.filter(Product.is_featured == 1)
 
         if min_price:
             try:
@@ -504,7 +536,7 @@ def create_app():
         elif sort == 'rating':
             query = query.order_by(Product.rating.desc())
         elif sort == 'popular':
-            query = query.order_by(Product.reviews_count.desc())
+            query = query.order_by(Product.review_count.desc())
         else:
             query = query.order_by(Product.created_at.desc())
 
@@ -515,7 +547,7 @@ def create_app():
     def product_detail(slug_or_id):
         product = Product.query.filter(
             (Product.slug == slug_or_id) |
-            (Product.id == int(slug_or_id) if slug_or_id.isdigit() else False)
+            (Product.id == slug_or_id)
         ).first()
 
         if not product:
@@ -525,16 +557,12 @@ def create_app():
             return jsonify(product.to_dict(detail=True)), 200
 
         user = get_user_from_jwt()
-        if not user or not (user.is_admin_user or user.is_staff):
+        if not user or not user.is_admin_user:
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
         if request.method == 'DELETE':
             try:
-                # Remove active cart items referencing this product
                 CartItem.query.filter_by(product_id=product.id).delete()
-                # Detach order items gracefully
-                for oi in OrderItem.query.filter_by(product_id=product.id).all():
-                    oi.product_id = None
                 db.session.delete(product)
                 db.session.commit()
                 return jsonify({'message': 'Product deleted successfully.'}), 200
@@ -552,17 +580,15 @@ def create_app():
                 if 'price' in data:
                     product.price = float(data['price'])
                 if 'compare_at_price' in data:
-                    product.compare_at_price = float(data['compare_at_price']) if data['compare_at_price'] else None
+                    product.original_price = float(data['compare_at_price']) if data['compare_at_price'] else None
                 if 'stock_quantity' in data:
-                    product.stock_quantity = int(data['stock_quantity'])
+                    product.stock = int(data['stock_quantity'])
                 if 'short_description' in data:
-                    product.short_description = data['short_description']
+                    product.description = data['short_description']
                 if 'description' in data:
-                    product.description = data['description']
+                    product.full_description = data['description']
                 if 'is_featured' in data:
                     product.is_featured = str(data['is_featured']).lower() in ['true', '1']
-                if 'main_image_url' in data:
-                    product.main_image_url = data['main_image_url']
                 db.session.commit()
                 return jsonify(product.to_dict(detail=True)), 200
             except Exception as e:
@@ -581,18 +607,18 @@ def create_app():
     def add_to_cart():
         cart = get_current_cart()
         data = request.get_json() or {}
+        prod_id = str(data.get('product_id', ''))
         try:
-            product_id = int(data.get('product_id', 0))
             quantity = max(1, int(data.get('quantity', 1)))
         except (ValueError, TypeError):
-            return jsonify({'detail': 'Invalid product_id or quantity.'}), 400
+            quantity = 1
 
-        if not product_id:
+        if not prod_id:
             return jsonify({'detail': 'product_id is required.'}), 400
 
-        product = db.session.get(Product, product_id)
-        if not product or not product.is_active:
-            return jsonify({'detail': 'Product not found or inactive.'}), 404
+        product = db.session.get(Product, prod_id) or Product.query.filter_by(slug=prod_id).first()
+        if not product:
+            return jsonify({'detail': 'Product not found.'}), 404
 
         try:
             item = CartItem.query.filter_by(cart_id=cart.id, product_id=product.id).first()
@@ -609,7 +635,7 @@ def create_app():
             }), 200
         except Exception as e:
             db.session.rollback()
-            return jsonify({'detail': f'Failed to add item to cart: {str(e)}'}), 500
+            return jsonify({'detail': f'Failed to add item: {str(e)}'}), 500
 
     @app.route('/api/cart/items/<int:item_id>/', methods=['PUT'])
     def update_cart_item(item_id):
@@ -704,7 +730,7 @@ def create_app():
                 'id': coupon.id,
                 'code': coupon.code,
                 'discount_type': coupon.discount_type,
-                'discount_value': coupon.discount_value,
+                'discount_value': float(coupon.discount_value),
                 'discount_amount': f"{discount:.2f}",
                 'new_total': f"{new_total:.2f}"
             }
@@ -713,7 +739,7 @@ def create_app():
     @app.route('/api/coupons/admin/', methods=['GET', 'POST'])
     def admin_coupons():
         user = get_user_from_jwt()
-        if not user or not (user.is_admin_user or user.is_staff):
+        if not user or not user.is_admin_user:
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
         if request.method == 'POST':
@@ -724,30 +750,18 @@ def create_app():
 
             try:
                 disc_val = float(data.get('discount_value', 10.0))
+                min_sp = float(data.get('min_spend', 0.0))
             except (ValueError, TypeError):
                 disc_val = 10.0
-
-            try:
-                min_spend_val = float(data.get('min_spend', 0.0))
-            except (ValueError, TypeError):
-                min_spend_val = 0.0
-
-            max_disc = None
-            if data.get('max_discount'):
-                try:
-                    max_disc = float(data['max_discount'])
-                except (ValueError, TypeError):
-                    max_disc = None
+                min_sp = 0.0
 
             try:
                 coupon = Coupon(
                     code=code,
                     discount_type=data.get('discount_type', 'percentage'),
                     discount_value=disc_val,
-                    min_spend=min_spend_val,
-                    max_discount=max_disc,
-                    usage_limit=int(data['usage_limit']) if data.get('usage_limit') else None,
-                    is_active=bool(data.get('is_active', True))
+                    min_spend=min_sp,
+                    is_active=True
                 )
                 db.session.add(coupon)
                 db.session.commit()
@@ -762,7 +776,7 @@ def create_app():
     @app.route('/api/coupons/admin/<int:coupon_id>/', methods=['DELETE'])
     def delete_coupon(coupon_id):
         user = get_user_from_jwt()
-        if not user or not (user.is_admin_user or user.is_staff):
+        if not user or not user.is_admin_user:
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
         coupon = db.session.get(Coupon, coupon_id)
@@ -795,23 +809,13 @@ def create_app():
             shipping_address = (data.get('shipping_address') or '').strip()
             shipping_city = (data.get('shipping_city') or 'Phnom Penh').strip()
 
-            # Fallback to user credentials if available
             if not shipping_name and user:
                 shipping_name = user.name
             if not shipping_phone and user:
-                shipping_phone = user.phone_number or ''
+                shipping_phone = user.phone or ''
 
             if not shipping_name or not shipping_phone or not shipping_address:
                 return jsonify({'detail': 'Name, phone, and delivery address are required.'}), 400
-
-            # Stock check
-            for item in cart.items:
-                if not item.product:
-                    continue
-                if item.quantity > item.product.stock_quantity:
-                    return jsonify({
-                        'detail': f"Insufficient stock for '{item.product.name}'. Only {item.product.stock_quantity} left in stock."
-                    }), 400
 
             subtotal = cart.subtotal
             coupon_code = (data.get('coupon_code') or '').strip().upper()
@@ -825,67 +829,73 @@ def create_app():
                         discount_amount = coupon.calculate_discount(subtotal)
                         coupon.times_used += 1
 
-            # Free shipping over $50, else $5.00
             shipping_fee = 0.0 if subtotal >= 50.0 else 5.0
             tax_amount = 0.0
             total_amount = max(0.0, subtotal - discount_amount) + shipping_fee + tax_amount
 
             order_number = f"ORD-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
+            # Prepare items list JSON for MySQL orders table
+            order_items_json = []
+            for item in cart.items:
+                prod = Product.query.get(item.product_id)
+                if not prod:
+                    continue
+                p_dict = prod.to_dict()
+                order_items_json.append({
+                    'id': f"item-{uuid.uuid4().hex[:6]}",
+                    'productId': prod.id,
+                    'name': prod.name,
+                    'image': p_dict['main_image_url'],
+                    'price': float(prod.price),
+                    'quantity': item.quantity
+                })
+                prod.stock = max(0, int(prod.stock or 0) - item.quantity)
+
+            shipping_addr_dict = {
+                'firstName': shipping_name.split(' ')[0] if shipping_name else '',
+                'lastName': shipping_name.split(' ')[1] if len(shipping_name.split(' ')) > 1 else '',
+                'email': user.email if user else (data.get('guest_email') or ''),
+                'phone': shipping_phone,
+                'address': shipping_address,
+                'city': shipping_city,
+                'country': 'Cambodia'
+            }
+
+            timeline_json = [
+                {
+                    'status': 'Pending',
+                    'title': 'Order Placed',
+                    'description': 'Your order has been received.',
+                    'time': datetime.now(timezone.utc).strftime('%b %d, %Y %I:%M %p'),
+                    'isCompleted': True,
+                    'isCurrent': True
+                }
+            ]
+
             try:
                 order = Order(
+                    id=f"ord-{uuid.uuid4().hex[:8]}",
                     order_number=order_number,
-                    user_id=user.id if user else None,
-                    guest_email=data.get('guest_email') if not user else user.email,
-                    guest_name=shipping_name if not user else user.name,
-                    status='pending',
-                    payment_status='paid' if data.get('payment_method') in ['card', 'aba_khqr'] else 'unpaid',
-                    payment_method=data.get('payment_method', 'cod'),
-                    shipping_name=shipping_name,
-                    shipping_phone=shipping_phone,
-                    shipping_address=shipping_address,
-                    shipping_city=shipping_city,
-                    shipping_state=data.get('shipping_state', ''),
-                    shipping_postal_code=data.get('shipping_postal_code', ''),
-                    shipping_country=data.get('shipping_country', 'Cambodia'),
+                    user_id=user.id if user else 'guest',
+                    customer_name=shipping_name,
+                    customer_email=user.email if user else (data.get('guest_email') or 'customer@shopease.com'),
+                    customer_phone=shipping_phone,
+                    items=json.dumps(order_items_json),
                     subtotal=subtotal,
-                    discount_amount=discount_amount,
-                    shipping_fee=shipping_fee,
-                    tax_amount=tax_amount,
-                    total_amount=total_amount,
-                    coupon_code=coupon_code if discount_amount > 0 else None,
-                    notes=data.get('notes', '')
+                    discount=discount_amount,
+                    shipping=shipping_fee,
+                    tax=tax_amount,
+                    total=total_amount,
+                    payment_method=data.get('payment_method', 'cod'),
+                    payment_status='paid' if data.get('payment_method') in ['card', 'aba_khqr'] else 'unpaid',
+                    status='Pending',
+                    shipping_address=json.dumps(shipping_addr_dict),
+                    timeline=json.dumps(timeline_json)
                 )
                 db.session.add(order)
-                db.session.flush()
 
-                # Create OrderItems and decrement stock
-                for item in cart.items:
-                    if not item.product:
-                        continue
-                    order_item = OrderItem(
-                        order_id=order.id,
-                        product_id=item.product.id,
-                        product_name=item.product.name,
-                        product_image=item.product.main_image_url,
-                        price=item.product.price,
-                        quantity=item.quantity,
-                        total_price=item.total_price
-                    )
-                    db.session.add(order_item)
-                    item.product.stock_quantity = max(0, item.product.stock_quantity - item.quantity)
-
-                # Create Payment record
-                payment = Payment(
-                    order_id=order.id,
-                    payment_method=order.payment_method,
-                    amount=order.total_amount,
-                    status='completed' if order.payment_status == 'paid' else 'pending',
-                    transaction_id=f"TXN-{uuid.uuid4().hex[:10].upper()}"
-                )
-                db.session.add(payment)
-
-                # Clear cart
+                # Clear cart items
                 CartItem.query.filter_by(cart_id=cart.id).delete()
                 db.session.commit()
 
@@ -905,7 +915,7 @@ def create_app():
     def order_detail(order_number):
         order = Order.query.filter(
             (Order.order_number == order_number) |
-            (Order.id == int(order_number) if order_number.isdigit() else False)
+            (Order.id == order_number)
         ).first()
 
         if not order:
@@ -916,7 +926,7 @@ def create_app():
     @app.route('/api/orders/admin/', methods=['GET'])
     def admin_orders():
         user = get_user_from_jwt()
-        if not user or not (user.is_admin_user or user.is_staff):
+        if not user or not user.is_admin_user:
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
         status = request.args.get('status')
@@ -927,13 +937,13 @@ def create_app():
         all_orders = query.order_by(Order.created_at.desc()).all()
         return jsonify([o.to_dict() for o in all_orders]), 200
 
-    @app.route('/api/orders/admin/<int:order_id>/status/', methods=['PATCH'])
+    @app.route('/api/orders/admin/<order_id>/status/', methods=['PATCH'])
     def update_order_status(order_id):
         user = get_user_from_jwt()
-        if not user or not (user.is_admin_user or user.is_staff):
+        if not user or not user.is_admin_user:
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
-        order = db.session.get(Order, order_id)
+        order = db.session.get(Order, str(order_id)) or Order.query.filter_by(order_number=str(order_id)).first()
         if not order:
             return jsonify({'detail': 'Order not found.'}), 404
 
@@ -957,7 +967,7 @@ def create_app():
     def product_reviews(slug_or_id):
         product = Product.query.filter(
             (Product.slug == slug_or_id) |
-            (Product.id == int(slug_or_id) if slug_or_id.isdigit() else False)
+            (Product.id == slug_or_id)
         ).first()
 
         if not product:
@@ -993,8 +1003,8 @@ def create_app():
                 # Recalculate product rating
                 all_revs = Review.query.filter_by(product_id=product.id).all()
                 if all_revs:
-                    product.rating = round(sum(r.rating for r in all_revs) / len(all_revs), 1)
-                    product.reviews_count = len(all_revs)
+                    product.rating = round(sum(r.rating for r in all_revs) / len(all_revs), 2)
+                    product.review_count = len(all_revs)
 
                 db.session.commit()
                 return jsonify(review.to_dict()), 201
@@ -1012,8 +1022,8 @@ app = create_app()
 
 if __name__ == '__main__':
     print("========================================================")
-    print("  [+] ShopEase Flask Server Started Successfully!")
-    print("  Local:   http://127.0.0.1:8000")
-    print("  Network: http://localhost:8000")
+    print("  [+] ShopEase Flask Server (Connected to MySQL phpMyAdmin)")
+    print("  Database: shopease_db (127.0.0.1:3306)")
+    print("  Local:    http://127.0.0.1:8000")
     print("========================================================")
     app.run(host='0.0.0.0', port=8000, debug=True)

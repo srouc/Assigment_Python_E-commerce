@@ -62,6 +62,7 @@ def run_tests():
 
     # 7. Test Cart Operations without trailing slash and with 'undefined' session keys
     sess_headers = {'X-Session-Key': 'test-robust-session-999'}
+    client.post('/api/cart/clear', headers=sess_headers)
     add_res = client.post('/api/cart/add', json={'product_id': first_product['id'], 'quantity': 1}, headers=sess_headers)
     assert add_res.status_code == 200
     cart_data = add_res.get_json()['cart']

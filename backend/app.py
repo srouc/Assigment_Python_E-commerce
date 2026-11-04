@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 from flask_jwt_extended import (
@@ -26,6 +26,9 @@ def create_app():
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
 
+    # Disable strict slashes so /api/products and /api/products/ both work without 308 redirects
+    app.url_map.strict_slashes = False
+
     # Enable CORS for Next.js frontend
     CORS(
         app,
@@ -37,12 +40,27 @@ def create_app():
     db.init_app(app)
     jwt = JWTManager(app)
 
-    # Auto create tables and seed demo data
+    # Auto rollback and clean up DB session on request teardown
+    @app.teardown_request
+    def teardown_request_func(exception=None):
+        if exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+        try:
+            db.session.remove()
+        except Exception:
+            pass
+
+    # Auto create tables and seed demo data if empty
     with app.app_context():
-        db.create_all()
-        # Seed if empty
-        if Category.query.count() == 0 or User.query.count() == 0:
-            seed_database()
+        try:
+            db.create_all()
+            if Category.query.count() == 0 or User.query.count() == 0:
+                seed_database()
+        except Exception as e:
+            print(f"[!] Database initialization notice: {e}")
 
     # --------------------------------------------------------------------------
     # Helper Utilities
@@ -50,19 +68,23 @@ def create_app():
     def get_user_from_jwt():
         try:
             auth_header = request.headers.get('Authorization', '')
-            if auth_header.startswith('Bearer '):
-                token = auth_header.split(' ', 1)[1]
-                decoded = decode_token(token)
-                identity = decoded.get('sub')
-                if identity:
-                    return User.query.get(int(identity))
+            if auth_header and auth_header.lower().startswith('bearer '):
+                token = auth_header.split(' ', 1)[1].strip()
+                if token and token not in ['undefined', 'null', 'None']:
+                    decoded = decode_token(token)
+                    identity = decoded.get('sub')
+                    if identity:
+                        return db.session.get(User, int(identity))
         except Exception:
             pass
         return None
 
     def get_current_cart():
         user = get_user_from_jwt()
-        session_key = request.headers.get('X-Session-Key')
+        raw_session_key = request.headers.get('X-Session-Key')
+        session_key = raw_session_key.strip() if raw_session_key else None
+        if session_key in [None, '', 'undefined', 'null', 'None']:
+            session_key = None
 
         if user:
             cart = Cart.query.filter_by(user_id=user.id).first()
@@ -75,13 +97,15 @@ def create_app():
             if session_key:
                 s_cart = Cart.query.filter_by(session_key=session_key).first()
                 if s_cart and s_cart.id != cart.id:
-                    for s_item in s_cart.items:
+                    s_items = list(s_cart.items)
+                    for s_item in s_items:
                         existing = CartItem.query.filter_by(cart_id=cart.id, product_id=s_item.product_id).first()
                         if existing:
                             existing.quantity += s_item.quantity
                         else:
                             new_item = CartItem(cart_id=cart.id, product_id=s_item.product_id, quantity=s_item.quantity)
                             db.session.add(new_item)
+                        db.session.delete(s_item)
                     db.session.delete(s_cart)
                     db.session.commit()
             return cart
@@ -215,36 +239,40 @@ def create_app():
         if User.query.filter(db.func.lower(User.email) == email).first():
             return jsonify({'detail': 'A user with this email already exists.'}), 400
 
-        user = User(
-            email=email,
-            full_name=full_name,
-            phone_number=phone_number
-        )
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+        try:
+            user = User(
+                email=email,
+                full_name=full_name,
+                phone_number=phone_number
+            )
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
 
-        access = create_access_token(identity=str(user.id))
-        refresh = create_refresh_token(identity=str(user.id))
+            access = create_access_token(identity=str(user.id))
+            refresh = create_refresh_token(identity=str(user.id))
 
-        return jsonify({
-            'message': 'Account registered successfully.',
-            'user': user.to_dict(),
-            'access': access,
-            'refresh': refresh
-        }), 201
+            return jsonify({
+                'message': 'Account registered successfully.',
+                'user': user.to_dict(),
+                'access': access,
+                'refresh': refresh
+            }), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Registration failed: {str(e)}'}), 500
 
     @app.route('/api/accounts/refresh/', methods=['POST'])
     def refresh_token():
         data = request.get_json() or {}
-        refresh_raw = data.get('refresh')
-        if not refresh_raw:
+        refresh_raw = (data.get('refresh') or '').strip()
+        if not refresh_raw or refresh_raw in ['undefined', 'null']:
             return jsonify({'detail': 'Refresh token is required.'}), 400
 
         try:
             decoded = decode_token(refresh_raw)
             user_id = decoded.get('sub')
-            user = User.query.get(int(user_id))
+            user = db.session.get(User, int(user_id)) if user_id else None
             if not user or not user.is_active:
                 return jsonify({'detail': 'User not found or inactive.'}), 401
 
@@ -257,19 +285,23 @@ def create_app():
     @jwt_required()
     def user_profile():
         user_id = get_jwt_identity()
-        user = User.query.get(int(user_id))
+        user = db.session.get(User, int(user_id)) if user_id else None
         if not user:
             return jsonify({'detail': 'User not found.'}), 404
 
         if request.method == 'PATCH':
             data = request.get_json() or {}
-            if 'full_name' in data:
-                user.full_name = data['full_name'].strip()
-            if 'phone_number' in data:
-                user.phone_number = data['phone_number'].strip()
-            if 'avatar' in data:
-                user.avatar = data['avatar']
-            db.session.commit()
+            try:
+                if 'full_name' in data:
+                    user.full_name = data['full_name'].strip()
+                if 'phone_number' in data:
+                    user.phone_number = data['phone_number'].strip()
+                if 'avatar' in data:
+                    user.avatar = data['avatar']
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Update failed: {str(e)}'}), 500
 
         return jsonify(user.to_dict()), 200
 
@@ -277,30 +309,34 @@ def create_app():
     @jwt_required()
     def user_addresses():
         user_id = get_jwt_identity()
-        user = User.query.get(int(user_id))
+        user = db.session.get(User, int(user_id)) if user_id else None
         if not user:
             return jsonify({'detail': 'User not found.'}), 404
 
         if request.method == 'POST':
             data = request.get_json() or {}
-            if data.get('is_default'):
-                for addr in user.addresses:
-                    addr.is_default = False
+            try:
+                if data.get('is_default'):
+                    for addr in user.addresses:
+                        addr.is_default = False
 
-            address = Address(
-                user_id=user.id,
-                full_name=data.get('full_name', user.name),
-                phone_number=data.get('phone_number', user.phone_number or ''),
-                street_address=data.get('street_address', ''),
-                city=data.get('city', 'Phnom Penh'),
-                state=data.get('state', ''),
-                postal_code=data.get('postal_code', ''),
-                country=data.get('country', 'Cambodia'),
-                is_default=bool(data.get('is_default', len(user.addresses) == 0))
-            )
-            db.session.add(address)
-            db.session.commit()
-            return jsonify(address.to_dict()), 201
+                address = Address(
+                    user_id=user.id,
+                    full_name=data.get('full_name', user.name),
+                    phone_number=data.get('phone_number', user.phone_number or ''),
+                    street_address=data.get('street_address', ''),
+                    city=data.get('city', 'Phnom Penh'),
+                    state=data.get('state', ''),
+                    postal_code=data.get('postal_code', ''),
+                    country=data.get('country', 'Cambodia'),
+                    is_default=bool(data.get('is_default', len(user.addresses) == 0))
+                )
+                db.session.add(address)
+                db.session.commit()
+                return jsonify(address.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Failed to create address: {str(e)}'}), 500
 
         return jsonify([addr.to_dict() for addr in user.addresses]), 200
 
@@ -320,16 +356,26 @@ def create_app():
                 return jsonify({'detail': 'Category name is required.'}), 400
 
             cat_slug = data.get('slug') or slugify(name)
-            cat = Category(
-                name=name,
-                slug=cat_slug,
-                description=data.get('description', ''),
-                image_url=data.get('image_url'),
-                icon=data.get('icon', 'Layers')
-            )
-            db.session.add(cat)
-            db.session.commit()
-            return jsonify(cat.to_dict()), 201
+            base_slug = cat_slug
+            counter = 1
+            while Category.query.filter_by(slug=cat_slug).first():
+                cat_slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            try:
+                cat = Category(
+                    name=name,
+                    slug=cat_slug,
+                    description=data.get('description', ''),
+                    image_url=data.get('image_url') or 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500',
+                    icon=data.get('icon', 'Layers')
+                )
+                db.session.add(cat)
+                db.session.commit()
+                return jsonify(cat.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Failed to create category: {str(e)}'}), 500
 
         cats = Category.query.filter_by(is_active=True).all()
         return jsonify([c.to_dict() for c in cats]), 200
@@ -351,25 +397,57 @@ def create_app():
 
             cat_id = data.get('category') or data.get('category_id')
             p_slug = data.get('slug') or slugify(name)
-            sku = data.get('sku') or f"SKU-{uuid.uuid4().hex[:6].upper()}"
+            base_slug = p_slug
+            counter = 1
+            while Product.query.filter_by(slug=p_slug).first():
+                p_slug = f"{base_slug}-{counter}"
+                counter += 1
 
-            product = Product(
-                name=name,
-                slug=p_slug,
-                category_id=int(cat_id) if cat_id else 1,
-                brand=data.get('brand', ''),
-                short_description=data.get('short_description', ''),
-                description=data.get('description', ''),
-                price=float(data.get('price', 0.0)),
-                compare_at_price=float(data['compare_at_price']) if data.get('compare_at_price') else None,
-                stock_quantity=int(data.get('stock_quantity', 10)),
-                sku=sku,
-                is_featured=str(data.get('is_featured')).lower() in ['true', '1'],
-                main_image_url=data.get('main_image_url') or 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800'
-            )
-            db.session.add(product)
-            db.session.commit()
-            return jsonify(product.to_dict(detail=True)), 201
+            sku = data.get('sku') or f"SKU-{uuid.uuid4().hex[:6].upper()}"
+            base_sku = sku
+            counter = 1
+            while Product.query.filter_by(sku=sku).first():
+                sku = f"{base_sku}-{counter}"
+                counter += 1
+
+            try:
+                price_val = float(data.get('price', 0.0))
+            except (ValueError, TypeError):
+                price_val = 0.0
+
+            compare_at = None
+            if data.get('compare_at_price'):
+                try:
+                    compare_at = float(data['compare_at_price'])
+                except (ValueError, TypeError):
+                    compare_at = None
+
+            try:
+                stock_val = int(data.get('stock_quantity', 10))
+            except (ValueError, TypeError):
+                stock_val = 10
+
+            try:
+                product = Product(
+                    name=name,
+                    slug=p_slug,
+                    category_id=int(cat_id) if cat_id else 1,
+                    brand=data.get('brand', ''),
+                    short_description=data.get('short_description', ''),
+                    description=data.get('description', ''),
+                    price=price_val,
+                    compare_at_price=compare_at,
+                    stock_quantity=stock_val,
+                    sku=sku,
+                    is_featured=str(data.get('is_featured')).lower() in ['true', '1'],
+                    main_image_url=data.get('main_image_url') or 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800'
+                )
+                db.session.add(product)
+                db.session.commit()
+                return jsonify(product.to_dict(detail=True)), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Failed to create product: {str(e)}'}), 500
 
         # Query Filters
         category = request.args.get('category')
@@ -384,7 +462,8 @@ def create_app():
         if str(is_admin).lower() not in ['true', '1']:
             query = query.filter_by(is_active=True)
 
-        if category:
+        # Filter category (skip 'all', 'undefined', 'null')
+        if category and category not in ['all', 'undefined', 'null', 'None', '']:
             cat = Category.query.filter(
                 (Category.slug == category) |
                 (Category.id == int(category) if category.isdigit() else False)
@@ -392,7 +471,7 @@ def create_app():
             if cat:
                 query = query.filter(Product.category_id == cat.id)
 
-        if search:
+        if search and search not in ['undefined', 'null', 'None', '']:
             search_term = f"%{search.strip().lower()}%"
             query = query.filter(
                 db.or_(
@@ -450,32 +529,45 @@ def create_app():
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
         if request.method == 'DELETE':
-            db.session.delete(product)
-            db.session.commit()
-            return jsonify({'message': 'Product deleted successfully.'}), 200
+            try:
+                # Remove active cart items referencing this product
+                CartItem.query.filter_by(product_id=product.id).delete()
+                # Detach order items gracefully
+                for oi in OrderItem.query.filter_by(product_id=product.id).all():
+                    oi.product_id = None
+                db.session.delete(product)
+                db.session.commit()
+                return jsonify({'message': 'Product deleted successfully.'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Delete failed: {str(e)}'}), 500
 
         if request.method == 'PATCH':
             data = request.form.to_dict() if request.form else (request.get_json() or {})
-            if 'name' in data:
-                product.name = data['name'].strip()
-            if 'brand' in data:
-                product.brand = data['brand'].strip()
-            if 'price' in data:
-                product.price = float(data['price'])
-            if 'compare_at_price' in data:
-                product.compare_at_price = float(data['compare_at_price']) if data['compare_at_price'] else None
-            if 'stock_quantity' in data:
-                product.stock_quantity = int(data['stock_quantity'])
-            if 'short_description' in data:
-                product.short_description = data['short_description']
-            if 'description' in data:
-                product.description = data['description']
-            if 'is_featured' in data:
-                product.is_featured = str(data['is_featured']).lower() in ['true', '1']
-            if 'main_image_url' in data:
-                product.main_image_url = data['main_image_url']
-            db.session.commit()
-            return jsonify(product.to_dict(detail=True)), 200
+            try:
+                if 'name' in data:
+                    product.name = data['name'].strip()
+                if 'brand' in data:
+                    product.brand = data['brand'].strip()
+                if 'price' in data:
+                    product.price = float(data['price'])
+                if 'compare_at_price' in data:
+                    product.compare_at_price = float(data['compare_at_price']) if data['compare_at_price'] else None
+                if 'stock_quantity' in data:
+                    product.stock_quantity = int(data['stock_quantity'])
+                if 'short_description' in data:
+                    product.short_description = data['short_description']
+                if 'description' in data:
+                    product.description = data['description']
+                if 'is_featured' in data:
+                    product.is_featured = str(data['is_featured']).lower() in ['true', '1']
+                if 'main_image_url' in data:
+                    product.main_image_url = data['main_image_url']
+                db.session.commit()
+                return jsonify(product.to_dict(detail=True)), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Update failed: {str(e)}'}), 500
 
     # --------------------------------------------------------------------------
     # Cart Endpoints (/api/cart/...)
@@ -489,49 +581,63 @@ def create_app():
     def add_to_cart():
         cart = get_current_cart()
         data = request.get_json() or {}
-        product_id = data.get('product_id')
-        quantity = int(data.get('quantity', 1))
+        try:
+            product_id = int(data.get('product_id', 0))
+            quantity = max(1, int(data.get('quantity', 1)))
+        except (ValueError, TypeError):
+            return jsonify({'detail': 'Invalid product_id or quantity.'}), 400
 
         if not product_id:
             return jsonify({'detail': 'product_id is required.'}), 400
 
-        product = Product.query.get(int(product_id))
+        product = db.session.get(Product, product_id)
         if not product or not product.is_active:
             return jsonify({'detail': 'Product not found or inactive.'}), 404
 
-        item = CartItem.query.filter_by(cart_id=cart.id, product_id=product.id).first()
-        if item:
-            item.quantity += quantity
-        else:
-            item = CartItem(cart_id=cart.id, product_id=product.id, quantity=quantity)
-            db.session.add(item)
+        try:
+            item = CartItem.query.filter_by(cart_id=cart.id, product_id=product.id).first()
+            if item:
+                item.quantity += quantity
+            else:
+                item = CartItem(cart_id=cart.id, product_id=product.id, quantity=quantity)
+                db.session.add(item)
 
-        db.session.commit()
-        return jsonify({
-            'message': f"Added {product.name} to cart.",
-            'cart': cart.to_dict()
-        }), 200
+            db.session.commit()
+            return jsonify({
+                'message': f"Added {product.name} to cart.",
+                'cart': cart.to_dict()
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Failed to add item to cart: {str(e)}'}), 500
 
     @app.route('/api/cart/items/<int:item_id>/', methods=['PUT'])
     def update_cart_item(item_id):
         cart = get_current_cart()
         data = request.get_json() or {}
-        quantity = int(data.get('quantity', 1))
+        try:
+            quantity = int(data.get('quantity', 1))
+        except (ValueError, TypeError):
+            quantity = 1
 
         item = CartItem.query.filter_by(id=item_id, cart_id=cart.id).first()
         if not item:
             return jsonify({'detail': 'Cart item not found.'}), 404
 
-        if quantity <= 0:
-            db.session.delete(item)
-        else:
-            item.quantity = quantity
+        try:
+            if quantity <= 0:
+                db.session.delete(item)
+            else:
+                item.quantity = quantity
 
-        db.session.commit()
-        return jsonify({
-            'message': 'Cart updated.',
-            'cart': cart.to_dict()
-        }), 200
+            db.session.commit()
+            return jsonify({
+                'message': 'Cart updated.',
+                'cart': cart.to_dict()
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Failed to update cart: {str(e)}'}), 500
 
     @app.route('/api/cart/items/<int:item_id>/remove/', methods=['DELETE'])
     def remove_cart_item(item_id):
@@ -540,22 +646,30 @@ def create_app():
         if not item:
             return jsonify({'detail': 'Cart item not found.'}), 404
 
-        db.session.delete(item)
-        db.session.commit()
-        return jsonify({
-            'message': 'Item removed from cart.',
-            'cart': cart.to_dict()
-        }), 200
+        try:
+            db.session.delete(item)
+            db.session.commit()
+            return jsonify({
+                'message': 'Item removed from cart.',
+                'cart': cart.to_dict()
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Failed to remove item: {str(e)}'}), 500
 
     @app.route('/api/cart/clear/', methods=['POST'])
     def clear_cart():
         cart = get_current_cart()
-        CartItem.query.filter_by(cart_id=cart.id).delete()
-        db.session.commit()
-        return jsonify({
-            'message': 'Cart cleared.',
-            'cart': cart.to_dict()
-        }), 200
+        try:
+            CartItem.query.filter_by(cart_id=cart.id).delete()
+            db.session.commit()
+            return jsonify({
+                'message': 'Cart cleared.',
+                'cart': cart.to_dict()
+            }), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Failed to clear cart: {str(e)}'}), 500
 
     # --------------------------------------------------------------------------
     # Coupon Endpoints (/api/coupons/...)
@@ -564,9 +678,12 @@ def create_app():
     def validate_coupon():
         data = request.get_json() or {}
         code = (data.get('code') or '').strip().upper()
-        subtotal = float(data.get('subtotal', 0.0))
+        try:
+            subtotal = float(data.get('subtotal') or 0.0)
+        except (ValueError, TypeError):
+            subtotal = 0.0
 
-        if not code:
+        if not code or code in ['NONE', 'NULL', 'UNDEFINED']:
             return jsonify({'valid': False, 'message': 'Coupon code is required.'}), 400
 
         coupon = Coupon.query.filter_by(code=code).first()
@@ -605,18 +722,39 @@ def create_app():
             if not code:
                 return jsonify({'detail': 'Code is required.'}), 400
 
-            coupon = Coupon(
-                code=code,
-                discount_type=data.get('discount_type', 'percentage'),
-                discount_value=float(data.get('discount_value', 10.0)),
-                min_spend=float(data.get('min_spend', 0.0)),
-                max_discount=float(data['max_discount']) if data.get('max_discount') else None,
-                usage_limit=int(data['usage_limit']) if data.get('usage_limit') else None,
-                is_active=bool(data.get('is_active', True))
-            )
-            db.session.add(coupon)
-            db.session.commit()
-            return jsonify(coupon.to_dict()), 201
+            try:
+                disc_val = float(data.get('discount_value', 10.0))
+            except (ValueError, TypeError):
+                disc_val = 10.0
+
+            try:
+                min_spend_val = float(data.get('min_spend', 0.0))
+            except (ValueError, TypeError):
+                min_spend_val = 0.0
+
+            max_disc = None
+            if data.get('max_discount'):
+                try:
+                    max_disc = float(data['max_discount'])
+                except (ValueError, TypeError):
+                    max_disc = None
+
+            try:
+                coupon = Coupon(
+                    code=code,
+                    discount_type=data.get('discount_type', 'percentage'),
+                    discount_value=disc_val,
+                    min_spend=min_spend_val,
+                    max_discount=max_disc,
+                    usage_limit=int(data['usage_limit']) if data.get('usage_limit') else None,
+                    is_active=bool(data.get('is_active', True))
+                )
+                db.session.add(coupon)
+                db.session.commit()
+                return jsonify(coupon.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Failed to create coupon: {str(e)}'}), 500
 
         coupons = Coupon.query.order_by(Coupon.created_at.desc()).all()
         return jsonify([c.to_dict() for c in coupons]), 200
@@ -627,10 +765,17 @@ def create_app():
         if not user or not (user.is_admin_user or user.is_staff):
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
-        coupon = Coupon.query.get_or_404(coupon_id)
-        db.session.delete(coupon)
-        db.session.commit()
-        return jsonify({'message': 'Coupon deleted.'}), 200
+        coupon = db.session.get(Coupon, coupon_id)
+        if not coupon:
+            return jsonify({'detail': 'Coupon not found.'}), 404
+
+        try:
+            db.session.delete(coupon)
+            db.session.commit()
+            return jsonify({'message': 'Coupon deleted.'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Delete failed: {str(e)}'}), 500
 
     # --------------------------------------------------------------------------
     # Orders Endpoints (/api/orders/...)
@@ -650,14 +795,29 @@ def create_app():
             shipping_address = (data.get('shipping_address') or '').strip()
             shipping_city = (data.get('shipping_city') or 'Phnom Penh').strip()
 
+            # Fallback to user credentials if available
+            if not shipping_name and user:
+                shipping_name = user.name
+            if not shipping_phone and user:
+                shipping_phone = user.phone_number or ''
+
             if not shipping_name or not shipping_phone or not shipping_address:
                 return jsonify({'detail': 'Name, phone, and delivery address are required.'}), 400
+
+            # Stock check
+            for item in cart.items:
+                if not item.product:
+                    continue
+                if item.quantity > item.product.stock_quantity:
+                    return jsonify({
+                        'detail': f"Insufficient stock for '{item.product.name}'. Only {item.product.stock_quantity} left in stock."
+                    }), 400
 
             subtotal = cart.subtotal
             coupon_code = (data.get('coupon_code') or '').strip().upper()
             discount_amount = 0.0
 
-            if coupon_code:
+            if coupon_code and coupon_code not in ['NONE', 'NULL', 'UNDEFINED']:
                 coupon = Coupon.query.filter_by(code=coupon_code).first()
                 if coupon:
                     valid, _ = coupon.is_valid(subtotal)
@@ -670,65 +830,69 @@ def create_app():
             tax_amount = 0.0
             total_amount = max(0.0, subtotal - discount_amount) + shipping_fee + tax_amount
 
-            order_number = f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+            order_number = f"ORD-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
-            order = Order(
-                order_number=order_number,
-                user_id=user.id if user else None,
-                guest_email=data.get('guest_email') if not user else None,
-                guest_name=shipping_name if not user else None,
-                status='pending',
-                payment_status='paid' if data.get('payment_method') in ['card', 'aba_khqr'] else 'unpaid',
-                payment_method=data.get('payment_method', 'cod'),
-                shipping_name=shipping_name,
-                shipping_phone=shipping_phone,
-                shipping_address=shipping_address,
-                shipping_city=shipping_city,
-                shipping_state=data.get('shipping_state', ''),
-                shipping_postal_code=data.get('shipping_postal_code', ''),
-                shipping_country=data.get('shipping_country', 'Cambodia'),
-                subtotal=subtotal,
-                discount_amount=discount_amount,
-                shipping_fee=shipping_fee,
-                tax_amount=tax_amount,
-                total_amount=total_amount,
-                coupon_code=coupon_code if discount_amount > 0 else None,
-                notes=data.get('notes', '')
-            )
-            db.session.add(order)
-            db.session.flush()
-
-            # Create OrderItems and decrement stock
-            for item in cart.items:
-                if not item.product:
-                    continue
-                order_item = OrderItem(
-                    order_id=order.id,
-                    product_id=item.product.id,
-                    product_name=item.product.name,
-                    product_image=item.product.main_image_url,
-                    price=item.product.price,
-                    quantity=item.quantity,
-                    total_price=item.total_price
+            try:
+                order = Order(
+                    order_number=order_number,
+                    user_id=user.id if user else None,
+                    guest_email=data.get('guest_email') if not user else user.email,
+                    guest_name=shipping_name if not user else user.name,
+                    status='pending',
+                    payment_status='paid' if data.get('payment_method') in ['card', 'aba_khqr'] else 'unpaid',
+                    payment_method=data.get('payment_method', 'cod'),
+                    shipping_name=shipping_name,
+                    shipping_phone=shipping_phone,
+                    shipping_address=shipping_address,
+                    shipping_city=shipping_city,
+                    shipping_state=data.get('shipping_state', ''),
+                    shipping_postal_code=data.get('shipping_postal_code', ''),
+                    shipping_country=data.get('shipping_country', 'Cambodia'),
+                    subtotal=subtotal,
+                    discount_amount=discount_amount,
+                    shipping_fee=shipping_fee,
+                    tax_amount=tax_amount,
+                    total_amount=total_amount,
+                    coupon_code=coupon_code if discount_amount > 0 else None,
+                    notes=data.get('notes', '')
                 )
-                db.session.add(order_item)
-                item.product.stock_quantity = max(0, item.product.stock_quantity - item.quantity)
+                db.session.add(order)
+                db.session.flush()
 
-            # Create Payment record
-            payment = Payment(
-                order_id=order.id,
-                payment_method=order.payment_method,
-                amount=order.total_amount,
-                status='completed' if order.payment_status == 'paid' else 'pending',
-                transaction_id=f"TXN-{uuid.uuid4().hex[:10].upper()}"
-            )
-            db.session.add(payment)
+                # Create OrderItems and decrement stock
+                for item in cart.items:
+                    if not item.product:
+                        continue
+                    order_item = OrderItem(
+                        order_id=order.id,
+                        product_id=item.product.id,
+                        product_name=item.product.name,
+                        product_image=item.product.main_image_url,
+                        price=item.product.price,
+                        quantity=item.quantity,
+                        total_price=item.total_price
+                    )
+                    db.session.add(order_item)
+                    item.product.stock_quantity = max(0, item.product.stock_quantity - item.quantity)
 
-            # Clear cart
-            CartItem.query.filter_by(cart_id=cart.id).delete()
-            db.session.commit()
+                # Create Payment record
+                payment = Payment(
+                    order_id=order.id,
+                    payment_method=order.payment_method,
+                    amount=order.total_amount,
+                    status='completed' if order.payment_status == 'paid' else 'pending',
+                    transaction_id=f"TXN-{uuid.uuid4().hex[:10].upper()}"
+                )
+                db.session.add(payment)
 
-            return jsonify(order.to_dict()), 201
+                # Clear cart
+                CartItem.query.filter_by(cart_id=cart.id).delete()
+                db.session.commit()
+
+                return jsonify(order.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Order creation failed: {str(e)}'}), 500
 
         # GET User Orders
         if not user:
@@ -757,7 +921,7 @@ def create_app():
 
         status = request.args.get('status')
         query = Order.query
-        if status:
+        if status and status not in ['all', 'undefined', 'null', '']:
             query = query.filter_by(status=status)
 
         all_orders = query.order_by(Order.created_at.desc()).all()
@@ -769,16 +933,22 @@ def create_app():
         if not user or not (user.is_admin_user or user.is_staff):
             return jsonify({'detail': 'Admin privileges required.'}), 403
 
-        order = Order.query.get_or_404(order_id)
+        order = db.session.get(Order, order_id)
+        if not order:
+            return jsonify({'detail': 'Order not found.'}), 404
+
         data = request.get_json() or {}
+        try:
+            if 'status' in data:
+                order.status = data['status']
+            if 'payment_status' in data:
+                order.payment_status = data['payment_status']
 
-        if 'status' in data:
-            order.status = data['status']
-        if 'payment_status' in data:
-            order.payment_status = data['payment_status']
-
-        db.session.commit()
-        return jsonify(order.to_dict()), 200
+            db.session.commit()
+            return jsonify(order.to_dict()), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'detail': f'Status update failed: {str(e)}'}), 500
 
     # --------------------------------------------------------------------------
     # Reviews Endpoints (/api/reviews/...)
@@ -795,43 +965,52 @@ def create_app():
 
         if request.method == 'POST':
             data = request.get_json() or {}
-            rating = int(data.get('rating', 5))
-            comment = (data.get('comment') or '').strip()
+            try:
+                rating = int(data.get('rating', 5))
+            except (ValueError, TypeError):
+                rating = 5
 
+            comment = (data.get('comment') or '').strip()
             if not comment:
                 return jsonify({'detail': 'Comment is required.'}), 400
 
             user = get_user_from_jwt()
             reviewer_name = data.get('reviewer_name') or (user.name if user else 'Verified Customer')
 
-            review = Review(
-                product_id=product.id,
-                user_id=user.id if user else None,
-                reviewer_name=reviewer_name,
-                rating=min(5, max(1, rating)),
-                title=data.get('title', ''),
-                comment=comment,
-                is_verified_purchase=True
-            )
-            db.session.add(review)
-            db.session.flush()
+            try:
+                review = Review(
+                    product_id=product.id,
+                    user_id=user.id if user else None,
+                    reviewer_name=reviewer_name,
+                    rating=min(5, max(1, rating)),
+                    title=data.get('title', ''),
+                    comment=comment,
+                    is_verified_purchase=True
+                )
+                db.session.add(review)
+                db.session.flush()
 
-            # Recalculate product rating
-            all_revs = Review.query.filter_by(product_id=product.id).all()
-            if all_revs:
-                product.rating = round(sum(r.rating for r in all_revs) / len(all_revs), 1)
-                product.reviews_count = len(all_revs)
+                # Recalculate product rating
+                all_revs = Review.query.filter_by(product_id=product.id).all()
+                if all_revs:
+                    product.rating = round(sum(r.rating for r in all_revs) / len(all_revs), 1)
+                    product.reviews_count = len(all_revs)
 
-            db.session.commit()
-            return jsonify(review.to_dict()), 201
+                db.session.commit()
+                return jsonify(review.to_dict()), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'detail': f'Failed to create review: {str(e)}'}), 500
 
         revs = Review.query.filter_by(product_id=product.id).order_by(Review.created_at.desc()).all()
         return jsonify([r.to_dict() for r in revs]), 200
 
     return app
 
+# Top-level application instance for WSGI / flask run / dev tooling
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     print("========================================================")
     print("  [+] ShopEase Flask Server Started Successfully!")
     print("  Local:   http://127.0.0.1:8000")

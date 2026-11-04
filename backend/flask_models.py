@@ -1,7 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import db
 import uuid
+
+def utc_now():
+    return datetime.now(timezone.utc)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -15,7 +18,7 @@ class User(db.Model):
     is_admin_user = db.Column(db.Boolean, default=False)
     is_staff = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     addresses = db.relationship('Address', backref='user', lazy=True, cascade='all, delete-orphan')
     orders = db.relationship('Order', backref='user', lazy=True)
@@ -56,7 +59,7 @@ class Address(db.Model):
     postal_code = db.Column(db.String(30), default='')
     country = db.Column(db.String(100), default='Cambodia')
     is_default = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     def to_dict(self):
         return {
@@ -81,7 +84,7 @@ class Category(db.Model):
     image_url = db.Column(db.String(500), nullable=True)
     icon = db.Column(db.String(50), default='Layers')
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     products = db.relationship('Product', backref='category', lazy=True)
 
@@ -95,7 +98,8 @@ class Category(db.Model):
             'display_image': self.image_url or "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format&fit=crop&q=60",
             'icon': self.icon,
             'is_active': self.is_active,
-            'products_count': len([p for p in self.products if p.is_active])
+            'products_count': len([p for p in (self.products or []) if p.is_active]),
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
 class Product(db.Model):
@@ -117,8 +121,8 @@ class Product(db.Model):
     rating = db.Column(db.Float, default=5.0)
     reviews_count = db.Column(db.Integer, default=0)
     main_image_url = db.Column(db.String(500), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
 
     images = db.relationship('ProductImage', backref='product', lazy=True, cascade='all, delete-orphan')
     reviews = db.relationship('Review', backref='product', lazy=True, cascade='all, delete-orphan')
@@ -137,10 +141,11 @@ class Product(db.Model):
             'category': self.category_id,
             'category_name': self.category.name if self.category else '',
             'category_slug': self.category.slug if self.category else '',
-            'brand': self.brand,
-            'short_description': self.short_description,
+            'brand': self.brand or '',
+            'short_description': self.short_description or '',
+            'description': self.description or '',
             'price': f"{self.price:.2f}",
-            'compare_at_price': f"{self.compare_at_price:.2f}" if self.compare_at_price else None,
+            'compare_at_price': f"{self.compare_at_price:.2f}" if (self.compare_at_price and self.compare_at_price > 0) else None,
             'discount_percentage': self.discount_percentage,
             'stock_quantity': self.stock_quantity,
             'is_in_stock': self.stock_quantity > 0,
@@ -151,11 +156,10 @@ class Product(db.Model):
             'reviews_count': self.reviews_count,
             'main_image_url': self.main_image_url,
             'display_image': self.main_image_url or "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60",
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'images': [img.to_dict() for img in self.images] if self.images else [],
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-        if detail:
-            data['description'] = self.description
-            data['images'] = [img.to_dict() for img in self.images]
         return data
 
 class ProductImage(db.Model):
@@ -180,14 +184,14 @@ class Cart(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_key = db.Column(db.String(64), nullable=True, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
 
     items = db.relationship('CartItem', backref='cart', lazy=True, cascade='all, delete-orphan')
 
     @property
     def total_items(self):
-        return sum(item.quantity for item in self.items)
+        return sum(item.quantity for item in self.items if item.product)
 
     @property
     def subtotal(self):
@@ -209,7 +213,7 @@ class CartItem(db.Model):
     cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     product = db.relationship('Product')
 
@@ -239,7 +243,7 @@ class Coupon(db.Model):
     usage_limit = db.Column(db.Integer, nullable=True)
     times_used = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     def is_valid(self, subtotal=0.0):
         if not self.is_active:
@@ -295,8 +299,8 @@ class Order(db.Model):
     total_amount = db.Column(db.Float, default=0.0)
     coupon_code = db.Column(db.String(50), nullable=True)
     notes = db.Column(db.Text, default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
 
     items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
     payments = db.relationship('Payment', backref='order', lazy=True, cascade='all, delete-orphan')
@@ -356,7 +360,7 @@ class OrderItem(db.Model):
             'id': self.id,
             'product': self.product_id,
             'product_name': self.product_name,
-            'product_image': self.product_image,
+            'product_image': self.product_image or "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60",
             'price': f"{self.price:.2f}",
             'quantity': self.quantity,
             'total_price': f"{self.total_price:.2f}"
@@ -371,7 +375,7 @@ class Payment(db.Model):
     amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, completed, failed
     transaction_id = db.Column(db.String(100), default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     def to_dict(self):
         return {
@@ -395,7 +399,7 @@ class Review(db.Model):
     title = db.Column(db.String(200), default='')
     comment = db.Column(db.Text, nullable=False)
     is_verified_purchase = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     user = db.relationship('User')
 

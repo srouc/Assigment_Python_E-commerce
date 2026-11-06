@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "name": "ShopEase Design System Tokens",
+  "global": {
+    "color": {
+      "brand": {
+        "primary-600": { "value": "#4f46e5", "type": "color", "description": "Main primary action token" },
+        "primary-500": { "value": "#6366f1", "type": "color", "description": "Hover and vibrant highlight" },
+        "primary-50": { "value": "#eef2ff", "type": "color", "description": "Soft active container background" }
+      },
+      "accent": {
+        "violet-600": { "value": "#7c3aed", "type": "color", "description": "Hero gradient flourish" },
+        "sky-500": { "value": "#0ea5e9", "type": "color", "description": "Secondary info callout" }
+      },
+      "semantic": {
+        "success": { "value": "#10b981", "type": "color", "description": "In-stock, order confirmed, free delivery" },
+        "warning": { "value": "#f59e0b", "type": "color", "description": "Low stock alert, pending review" },
+        "danger": { "value": "#f43f5e", "type": "color", "description": "Error notification, delete item" }
+      },
+      "neutral": {
+        "slate-950": { "value": "#020617", "type": "color", "description": "Top bar and dark footer" },
+        "slate-900": { "value": "#0f172a", "type": "color", "description": "Primary high-contrast headings" },
+        "slate-700": { "value": "#334155", "type": "color", "description": "Secondary body typography" },
+        "slate-500": { "value": "#64748b", "type": "color", "description": "Muted labels and timestamps" },
+        "slate-200": { "value": "#e2e8f0", "type": "color", "description": "Border and divider lines" },
+        "slate-100": { "value": "#f1f5f9", "type": "color", "description": "Surface background of input fields" },
+        "white": { "value": "#ffffff", "type": "color", "description": "Card background and text over brand" }
+      }
+    },
+    "fontFamilies": {
+      "heading": { "value": "Inter, sans-serif", "type": "fontFamilies" },
+      "body": { "value": "Inter, sans-serif", "type": "fontFamilies" },
+      "mono": { "value": "JetBrains Mono, monospace", "type": "fontFamilies" }
+    },
+    "fontSizes": {
+      "display": { "value": "48px", "type": "fontSizes" },
+      "h1": { "value": "30px", "type": "fontSizes" },
+      "h2": { "value": "24px", "type": "fontSizes" },
+      "h3": { "value": "20px", "type": "fontSizes" },
+      "body": { "value": "14px", "type": "fontSizes" },
+      "micro": { "value": "12px", "type": "fontSizes" }
+    },
+    "borderRadius": {
+      "sm": { "value": "8px", "type": "borderRadius" },
+      "md": { "value": "12px", "type": "borderRadius" },
+      "lg": { "value": "16px", "type": "borderRadius" },
+      "xl": { "value": "24px", "type": "borderRadius" },
+      "full": { "value": "9999px", "type": "borderRadius" }
+    },
+    "spacing": {
+      "xs": { "value": "4px", "type": "spacing" },
+      "sm": { "value": "8px", "type": "spacing" },
+      "md": { "value": "16px", "type": "spacing" },
+      "lg": { "value": "24px", "type": "spacing" },
+      "xl": { "value": "32px", "type": "spacing" },
+      "2xl": { "value": "48px", "type": "spacing" }
+    },
+    "boxShadow": {
+      "sm": { "value": "0 1px 2px 0 rgba(0, 0, 0, 0.05)", "type": "boxShadow" },
+      "md": { "value": "0 4px 6px -1px rgba(0, 0, 0, 0.1)", "type": "boxShadow" },
+      "lg": { "value": "0 10px 15px -3px rgba(0, 0, 0, 0.1)", "type": "boxShadow" },
+      "glow": { "value": "0 0 25px -5px rgba(99, 102, 241, 0.35)", "type": "boxShadow" }
+    }
+  }
+}

@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 920" width="1440" height="920" style="background:#090d16; font-family:'Inter', -apple-system, sans-serif;">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Navigation Minimal -->
+  <g id="Header" transform="translate(0, 0)">
+    <rect width="1440" height="70" fill="#0b1120" stroke="#1e293b" stroke-width="1"/>
+    <g transform="translate(80, 16)">
+      <rect width="36" height="36" rx="10" fill="url(#brandGrad)"/>
+      <text x="46" y="24" fill="#ffffff" font-size="18" font-weight="900">ShopEase Checkout</text>
+    </g>
+    <!-- Stepper indicator -->
+    <g transform="translate(600, 24)">
+      <text x="0" y="16" fill="#10b981" font-size="12" font-weight="700">✓ 1. Cart</text>
+      <text x="70" y="16" fill="#64748b" font-size="12">→</text>
+      <text x="95" y="16" fill="#818cf8" font-size="12" font-weight="800">● 2. Shipping &amp; Payment</text>
+      <text x="250" y="16" fill="#64748b" font-size="12">→</text>
+      <text x="275" y="16" fill="#64748b" font-size="12 font-weight="600"">3. Confirmation</text>
+    </g>
+  </g>
+
+  <!-- Checkout Grid -->
+  <g id="Checkout-Columns" transform="translate(80, 105)">
+    <!-- LEFT: Shipping & Payment (780px) -->
+    <g id="Left-Forms" filter="url(#cardShadow)">
+      <!-- 1. Shipping Details -->
+      <rect width="780" height="260" rx="20" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+      <g transform="translate(32, 28)">
+        <text x="0" y="16" fill="#ffffff" font-size="18" font-weight="800">1. Shipping &amp; Delivery Information</text>
+
+        <!-- Input row 1 -->
+        <g transform="translate(0, 40)">
+          <text x="0" y="0" fill="#94a3b8" font-size="12">Full Name</text>
+          <rect y="8" width="340" height="42" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+          <text x="14" y="34" fill="#ffffff" font-size="13">Sokha Meas</text>
+
+          <text x="370" y="0" fill="#94a3b8" font-size="12">Phone Number</text>
+          <rect x="370" y="8" width="340" height="42" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+          <text x="384" y="34" fill="#ffffff" font-size="13">012 345 678</text>
+        </g>
+
+        <!-- Input row 2 -->
+        <g transform="translate(0, 120)">
+          <text x="0" y="0" fill="#94a3b8" font-size="12">Street Address &amp; City</text>
+          <rect y="8" width="710" height="42" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+          <text x="14" y="34" fill="#ffffff" font-size="13">Street 271, Sangkat Boeung Tumpun, Khan Meanchey, Phnom Penh</text>
+        </g>
+      </g>
+
+      <!-- 2. Payment Method -->
+      <g transform="translate(0, 285)">
+        <rect width="780" height="460" rx="20" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+        <g transform="translate(32, 28)">
+          <text x="0" y="16" fill="#ffffff" font-size="18" font-weight="800">2. Select Payment Method</text>
+
+          <!-- Payment Option 1: ABA KHQR (Selected) -->
+          <g transform="translate(0, 40)">
+            <rect width="716" height="66" rx="14" fill="#1e1b4b" stroke="#4f46e5" stroke-width="2"/>
+            <circle cx="28" cy="33" r="10" fill="#4f46e5"/>
+            <circle cx="28" cy="33" r="4" fill="#ffffff"/>
+            <text x="56" y="28" fill="#ffffff" font-size="14" font-weight="800">ABA KHQR / Mobile Banking (Scan to Pay)</text>
+            <text x="56" y="48" fill="#a5b4fc" font-size="11">Instant zero-fee scan via Bakong, ABA Mobile, ACLEDA, Wing, or Canadia</text>
+            <rect x="620" y="18" width="70" height="30" rx="6" fill="#dc2626"/>
+            <text x="655" y="37" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">KHQR</text>
+          </g>
+
+          <!-- Payment Option 2: Cash on Delivery -->
+          <g transform="translate(0, 118)">
+            <rect width="716" height="56" rx="14" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+            <circle cx="28" cy="28" r="10" fill="#0f172a" stroke="#64748b" stroke-width="2"/>
+            <text x="56" y="33" fill="#cbd5e1" font-size="13" font-weight="600">Cash on Delivery (COD) - Pay upon package arrival</text>
+            <text x="680" y="33" font-size="16">💵</text>
+          </g>
+
+          <!-- KHQR Dynamic QR Box -->
+          <g transform="translate(0, 195)">
+            <rect width="716" height="210" rx="16" fill="#111827" stroke="#374151" stroke-width="1"/>
+            <!-- QR Graphic -->
+            <g transform="translate(32, 24)">
+              <rect width="160" height="160" rx="12" fill="#ffffff"/>
+              <!-- Simulated QR grid -->
+              <rect x="16" y="16" width="36" height="36" fill="#000000"/>
+              <rect x="22" y="22" width="24" height="24" fill="#ffffff"/>
+              <rect x="26" y="26" width="16" height="16" fill="#000000"/>
+
+              <rect x="108" y="16" width="36" height="36" fill="#000000"/>
+              <rect x="114" y="22" width="24" height="24" fill="#ffffff"/>
+              <rect x="118" y="26" width="16" height="16" fill="#000000"/>
+
+              <rect x="16" y="108" width="36" height="36" fill="#000000"/>
+              <rect x="22" y="114" width="24" height="24" fill="#ffffff"/>
+              <rect x="26" y="118" width="16" height="16" fill="#000000"/>
+
+              <rect x="70" y="70" width="20" height="20" fill="#dc2626"/>
+            </g>
+
+            <!-- Instructions -->
+            <g transform="translate(225, 35)">
+              <rect width="110" height="26" rx="8" fill="#991b1b"/>
+              <text x="55" y="18" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">BAKONG KHQR</text>
+              <text x="0" y="55" fill="#ffffff" font-size="20" font-weight="900">Total: $583.00 USD</text>
+              <text x="0" y="80" fill="#94a3b8" font-size="12">1. Open any Cambodian Banking App (ABA, Wing, ACLEDA)</text>
+              <text x="0" y="102" fill="#94a3b8" font-size="12">2. Scan the dynamic QR code on screen</text>
+              <text x="0" y="124" fill="#94a3b8" font-size="12">3. Confirm payment — system updates automatically in real-time</text>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+
+    <!-- RIGHT: Order Summary Card (460px) -->
+    <g id="Right-Summary" transform="translate(820, 0)" filter="url(#cardShadow)">
+      <rect width="460" height="420" rx="20" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+      <g transform="translate(28, 28)">
+        <text x="0" y="16" fill="#ffffff" font-size="18" font-weight="800">Order Summary</text>
+
+        <!-- Item line -->
+        <g transform="translate(0, 45)">
+          <rect width="48" height="48" rx="10" fill="#1e293b"/>
+          <text x="60" y="20" fill="#ffffff" font-size="13" font-weight="700">Sony WH-1000XM5</text>
+          <text x="60" y="38" fill="#94a3b8" font-size="11">Qty: 2 • $299.00 each</text>
+          <text x="404" y="28" fill="#ffffff" font-size="14" font-weight="800" text-anchor="end">$598.00</text>
+        </g>
+
+        <!-- Divider -->
+        <line x1="0" y1="115" x2="404" y2="115" stroke="#1e293b" stroke-width="1"/>
+
+        <!-- Calculations -->
+        <g transform="translate(0, 140)">
+          <text x="0" y="12" fill="#94a3b8" font-size="13">Subtotal:</text>
+          <text x="404" y="12" fill="#ffffff" font-size="13" font-weight="700" text-anchor="end">$598.00</text>
+
+          <text x="0" y="38" fill="#34d399" font-size="13">Coupon (SAVE15):</text>
+          <text x="404" y="38" fill="#34d399" font-size="13" font-weight="700" text-anchor="end">-$15.00</text>
+
+          <text x="0" y="64" fill="#94a3b8" font-size="13">Express Shipping:</text>
+          <text x="404" y="64" fill="#34d399" font-size="13" font-weight="700" text-anchor="end">FREE</text>
+
+          <line x1="0" y1="84" x2="404" y2="84" stroke="#1e293b" stroke-width="1"/>
+
+          <text x="0" y="112" fill="#ffffff" font-size="16" font-weight="900">Total to Pay:</text>
+          <text x="404" y="112" fill="#38bdf8" font-size="22" font-weight="900" text-anchor="end">$583.00</text>
+        </g>
+
+        <!-- Complete Order Button -->
+        <g transform="translate(0, 290)">
+          <rect width="404" height="54" rx="16" fill="#10b981"/>
+          <text x="202" y="33" fill="#ffffff" font-size="15" font-weight="800" text-anchor="middle">Place Order (ORD-7B429A)</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

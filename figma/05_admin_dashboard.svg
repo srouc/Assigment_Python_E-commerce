@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" style="background:#090d16; font-family:'Inter', -apple-system, sans-serif;">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- SIDEBAR NAVIGATION (260px) -->
+  <g id="Sidebar" transform="translate(0, 0)">
+    <rect width="260" height="900" fill="#0b1120" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- Admin Brand -->
+    <g transform="translate(24, 24)">
+      <rect width="36" height="36" rx="10" fill="url(#brandGrad)"/>
+      <text x="48" y="23" fill="#ffffff" font-size="18" font-weight="900">ShopEase</text>
+      <rect x="145" y="6" width="55" height="20" rx="6" fill="#78350f"/>
+      <text x="172" y="20" fill="#fde68a" font-size="10" font-weight="800" text-anchor="middle">ADMIN</text>
+    </g>
+
+    <!-- Nav Menu -->
+    <g transform="translate(16, 100)">
+      <!-- Active Dashboard Item -->
+      <rect width="228" height="44" rx="12" fill="#1e1b4b" stroke="#3730a3" stroke-width="1"/>
+      <text x="20" y="27" fill="#818cf8" font-size="13" font-weight="800">📊 Dashboard Overview</text>
+
+      <g transform="translate(20, 68)">
+        <text y="0" fill="#94a3b8" font-size="13">📦 Products Catalog</text>
+        <text y="42" fill="#cbd5e1" font-size="13" font-weight="700">📑 Orders Management</text>
+        <text y="84" fill="#94a3b8" font-size="13">👥 Customers</text>
+        <text y="126" fill="#94a3b8" font-size="13">🎟️ Promotional Coupons</text>
+        <text y="168" fill="#94a3b8" font-size="13">⚙️ Store Settings</text>
+      </g>
+    </g>
+
+    <!-- Admin profile bottom -->
+    <g transform="translate(20, 820)">
+      <rect width="220" height="56" rx="14" fill="#1e293b"/>
+      <circle cx="28" cy="28" r="16" fill="url(#brandGrad)"/>
+      <text x="28" y="33" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">A</text>
+      <text x="54" y="25" fill="#ffffff" font-size="12" font-weight="700">Store Manager</text>
+      <text x="54" y="40" fill="#64748b" font-size="11">admin@shopease.com</text>
+    </g>
+  </g>
+
+  <!-- TOP HEADER (Right of sidebar: 1180px) -->
+  <g id="Top-Bar" transform="translate(260, 0)">
+    <rect width="1180" height="70" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="40" y="42" fill="#ffffff" font-size="20" font-weight="900">Dashboard &amp; Operations Center</text>
+
+    <!-- Store Status Pill -->
+    <g transform="translate(940, 20)">
+      <rect width="180" height="32" rx="16" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+      <circle cx="16" cy="16" r="4" fill="#34d399"/>
+      <text x="28" y="20" fill="#34d399" font-size="11" font-weight="700">Store Status: Online 24/7</text>
+    </g>
+  </g>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <g id="Dashboard-Body" transform="translate(300, 100)">
+    <!-- 4 KPI Metric Cards -->
+    <g id="KPI-Metrics">
+      <!-- Card 1: Revenue -->
+      <g transform="translate(0, 0)" filter="url(#shadow)">
+        <rect width="255" height="120" rx="18" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+        <g transform="translate(20, 20)">
+          <text x="0" y="10" fill="#64748b" font-size="11" font-weight="700" letter-spacing="1">TOTAL REVENUE</text>
+          <text x="0" y="45" fill="#ffffff" font-size="28" font-weight="900">$12,480.00</text>
+          <rect x="0" y="58" width="105" height="22" rx="6" fill="#064e3b"/>
+          <text x="52" y="73" fill="#34d399" font-size="10" font-weight="800" text-anchor="middle">↑ 18.2% this month</text>
+        </g>
+      </g>
+
+      <!-- Card 2: Total Orders -->
+      <g transform="translate(275, 0)" filter="url(#shadow)">
+        <rect width="255" height="120" rx="18" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+        <g transform="translate(20, 20)">
+          <text x="0" y="10" fill="#64748b" font-size="11" font-weight="700" letter-spacing="1">TOTAL ORDERS</text>
+          <text x="0" y="45" fill="#ffffff" font-size="28" font-weight="900">142</text>
+          <rect x="0" y="58" width="105" height="22" rx="6" fill="#1e1b4b"/>
+          <text x="52" y="73" fill="#818cf8" font-size="10" font-weight="800" text-anchor="middle">12 pending action</text>
+        </g>
+      </g>
+
+      <!-- Card 3: Total Products -->
+      <g transform="translate(550, 0)" filter="url(#shadow)">
+        <rect width="255" height="120" rx="18" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+        <g transform="translate(20, 20)">
+          <text x="0" y="10" fill="#64748b" font-size="11" font-weight="700" letter-spacing="1">ACTIVE PRODUCTS</text>
+          <text x="0" y="45" fill="#ffffff" font-size="28" font-weight="900">8 Items</text>
+          <text x="0" y="73" fill="#94a3b8" font-size="11">100% active catalog</text>
+        </g>
+      </g>
+
+      <!-- Card 4: Inventory Alerts -->
+      <g transform="translate(825, 0)" filter="url(#shadow)">
+        <rect width="255" height="120" rx="18" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+        <g transform="translate(20, 20)">
+          <text x="0" y="10" fill="#64748b" font-size="11" font-weight="700" letter-spacing="1">LOW STOCK ALERTS</text>
+          <text x="0" y="45" fill="#fbbf24" font-size="28" font-weight="900">2 Items</text>
+          <rect x="0" y="58" width="95" height="22" rx="6" fill="#451a03"/>
+          <text x="47" y="73" fill="#fbbf24" font-size="10" font-weight="800" text-anchor="middle">Stock &lt; 10 units</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Orders Management Data Table -->
+    <g id="Orders-Table" transform="translate(0, 160)" filter="url(#shadow)">
+      <rect width="1080" height="580" rx="20" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+
+      <!-- Table Header -->
+      <g transform="translate(28, 28)">
+        <text x="0" y="16" fill="#ffffff" font-size="18" font-weight="800">Recent Customer Orders</text>
+        <text x="0" y="36" fill="#64748b" font-size="12">Real-time status updates and fulfillment workflow</text>
+
+        <!-- Column Headers -->
+        <g transform="translate(0, 70)">
+          <rect width="1024" height="40" rx="10" fill="#1e293b"/>
+          <text x="20" y="25" fill="#94a3b8" font-size="11" font-weight="700">ORDER REF</text>
+          <text x="180" y="25" fill="#94a3b8" font-size="11" font-weight="700">CUSTOMER</text>
+          <text x="360" y="25" fill="#94a3b8" font-size="11" font-weight="700">PAYMENT</text>
+          <text x="520" y="25" fill="#94a3b8" font-size="11" font-weight="700">AMOUNT</text>
+          <text x="660" y="25" fill="#94a3b8" font-size="11" font-weight="700">ORDER STATUS</text>
+          <text x="850" y="25" fill="#94a3b8" font-size="11" font-weight="700">ACTIONS</text>
+        </g>
+
+        <!-- Row 1 -->
+        <g transform="translate(0, 125)">
+          <text x="20" y="26" fill="#818cf8" font-size="13" font-mono font-weight="800">#ORD-B45A342E</text>
+          <text x="180" y="20" fill="#ffffff" font-size="13" font-weight="700">Sokha Meas</text>
+          <text x="180" y="36" fill="#64748b" font-size="11">012 345 678</text>
+
+          <rect x="360" y="8" width="95" height="26" rx="6" fill="#064e3b"/>
+          <text x="407" y="25" fill="#34d399" font-size="11" font-weight="800" text-anchor="middle">PAID (KHQR)</text>
+
+          <text x="520" y="26" fill="#ffffff" font-size="14" font-weight="800">$583.00</text>
+
+          <rect x="660" y="8" width="105" height="26" rx="6" fill="#1e1b4b"/>
+          <text x="712" y="25" fill="#818cf8" font-size="11" font-weight="800" text-anchor="middle">PROCESSING</text>
+
+          <rect x="850" y="4" width="85" height="32" rx="8" fill="#4f46e5"/>
+          <text x="892" y="24" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">Dispatch →</text>
+        </g>
+
+        <line x1="0" y1="175" x2="1024" y2="175" stroke="#1e293b" stroke-width="1"/>
+
+        <!-- Row 2 -->
+        <g transform="translate(0, 190)">
+          <text x="20" y="26" fill="#818cf8" font-size="13" font-mono font-weight="800">#ORD-7C189F2A</text>
+          <text x="180" y="20" fill="#ffffff" font-size="13" font-weight="700">Bopha Chan</text>
+          <text x="180" y="36" fill="#64748b" font-size="11">098 765 432</text>
+
+          <rect x="360" y="8" width="95" height="26" rx="6" fill="#451a03"/>
+          <text x="407" y="25" fill="#fbbf24" font-size="11" font-weight="800" text-anchor="middle">PENDING COD</text>
+
+          <text x="520" y="26" fill="#ffffff" font-size="14" font-weight="800">$150.00</text>
+
+          <rect x="660" y="8" width="105" height="26" rx="6" fill="#451a03"/>
+          <text x="712" y="25" fill="#fbbf24" font-size="11" font-weight="800" text-anchor="middle">PENDING</text>
+
+          <rect x="850" y="4" width="85" height="32" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+          <text x="892" y="24" fill="#cbd5e1" font-size="11" font-weight="700" text-anchor="middle">Review</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

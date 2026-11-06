@@ -229,3 +229,4 @@ The interactive UI/UX Design System is built directly into the running platform:
   - Interactive ABA KHQR Payment Modal Simulator
   - Full ASCII screen wireframes (Home, Catalog, Product Detail, Cart Drawer, Checkout, Admin)
   - Usability heuristics and accessibility compliance matrix
+

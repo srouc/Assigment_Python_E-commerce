@@ -1,8 +1,8 @@
 # SHOPEASE E-COMMERCE PLATFORM
 ## Comprehensive Project Specification & System Documentation
-**Document Version:** 1.1.0  
+**Document Version:** 1.0.0  
 **Prepared For:** Course Assignment / Final Project Submission  
-**Technology Stack:** Next.js (TypeScript & Tailwind CSS) + Python (Flask REST API & SQLAlchemy)  
+**Technology Stack:** Next.js (TypeScript & Tailwind CSS) + Python (Django REST Framework)  
 **Date:** November 2026  
 
 ---
@@ -33,7 +33,7 @@ The **ShopEase Platform** is an enterprise-grade, full-stack E-Commerce solution
 
 The application is structured into two autonomous, loosely coupled tiers:
 - **A Client-Side Frontend Application** built with **Next.js 14**, **React 18**, **TypeScript**, and **Tailwind CSS**, designed for speed, responsiveness, and accessibility.
-- **A Server-Side Backend Application** built with **Python 3.14** and **Flask REST API / SQLAlchemy** (with dual support for Django REST Framework), utilizing secure JSON Web Token (JWT) authentication, atomic database transactions, dynamic data serialization, and strict Cross-Origin Resource Sharing (CORS) policies.
+- **A Server-Side Backend Application** built with **Python 3.14** and **Django REST Framework (DRF)**, providing secure cryptographic JSON Web Token (JWT) authentication, atomic database transactions, dynamic serialization, and strict Cross-Origin Resource Sharing (CORS) policies.
 
 Key achievements of the platform include seamless guest-to-customer shopping cart migration, automated stock decrementation under concurrency, real-time star-rating calculations, coupon validation logic, and support for localized payment methods including Cash On Delivery (COD) and ABA KHQR mobile banking.
 

@@ -61,3 +61,4 @@ Since our Next.js frontend is fully running on `http://localhost:3000`:
    - `http://localhost:3000/design-system` (UI/UX Design System Showcase)
    - `http://localhost:3000/orders` (Order Tracking)
 4. Click **Import**. The plugin will automatically convert the live React/Tailwind web page into Figma Auto-Layout components with real images and fonts!
+

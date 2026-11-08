@@ -73,7 +73,7 @@ export const Navbar: React.FC = () => {
                   ShopEase
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 -mt-1 tracking-widest uppercase">
-                  Modern Store
+                  Fashion Studio
                 </span>
               </div>
             </Link>
@@ -82,7 +82,7 @@ export const Navbar: React.FC = () => {
             <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-md relative">
               <input
                 type="text"
-                placeholder="Search premium electronics, apparel, lifestyle..."
+                placeholder="Search coats, silk dresses, denim, blazers, boots..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-100/70 hover:bg-slate-100 focus:bg-white border border-slate-200/60 focus:border-indigo-500 rounded-2xl text-xs sm:text-sm outline-none transition-all placeholder:text-slate-400 shadow-inner"

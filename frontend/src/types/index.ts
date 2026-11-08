@@ -20,6 +20,11 @@ export interface ProductImage {
   alt_text?: string;
 }
 
+export interface ProductColor {
+  name: string;
+  hex: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -40,6 +45,8 @@ export interface Product {
   is_active: boolean;
   rating: number | string;
   reviews_count: number;
+  sizes?: string[];
+  colors?: ProductColor[];
   main_image?: string;
   main_image_url?: string;
   display_image: string;
@@ -76,6 +83,8 @@ export interface CartItem {
   id: number;
   product: Product;
   quantity: number;
+  selected_size?: string;
+  selected_color?: string;
   total_price: string | number;
   created_at: string;
 }
@@ -100,55 +109,49 @@ export interface Coupon {
 
 export interface OrderItem {
   id: number;
-  product?: number;
+  product_id: number;
   product_name: string;
   product_image?: string;
   price: string | number;
   quantity: number;
-  total_price: string | number;
+  selected_size?: string;
+  selected_color?: string;
+  subtotal: string | number;
+  total_price?: string | number;
 }
 
 export interface Order {
   id: number;
   order_number: string;
-  user?: number;
-  guest_email?: string;
-  guest_name?: string;
+  user?: number | User;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  status_display: string;
+  status_display?: string;
+  subtotal: string | number;
+  tax_amount?: string | number;
+  shipping_fee: string | number;
+  discount_amount: string | number;
+  total_amount: string | number;
+  coupon_code?: string;
+  payment_method: 'aba_khqr' | 'cod' | 'card' | 'paypal';
+  payment_method_display?: string;
   payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded';
-  payment_status_display: string;
-  payment_method: 'cod' | 'card' | 'aba_khqr' | 'paypal';
-  payment_method_display: string;
+  payment_status_display?: string;
   shipping_name: string;
   shipping_phone: string;
   shipping_address: string;
   shipping_city: string;
-  shipping_state?: string;
-  shipping_postal_code?: string;
-  shipping_country: string;
-  subtotal: string | number;
-  discount_amount: string | number;
-  shipping_fee: string | number;
-  tax_amount: string | number;
-  total_amount: string | number;
-  coupon_code?: string | null;
-  notes?: string;
+  shipping_notes?: string;
   items: OrderItem[];
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface Review {
   id: number;
   product: number;
-  user?: number;
-  reviewer_name: string;
-  user_avatar?: string;
+  user_name: string;
   rating: number;
-  title?: string;
   comment: string;
   is_verified_purchase: boolean;
   created_at: string;
 }
-

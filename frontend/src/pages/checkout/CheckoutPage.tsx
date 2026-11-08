@@ -403,7 +403,11 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-semibold text-slate-800 truncate">{item.product.name}</h4>
-                    <span className="text-xs text-slate-400">Qty: {item.quantity}</span>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                      <span>Qty: {item.quantity}</span>
+                      {item.selected_size && <span>• Size: {item.selected_size}</span>}
+                      {item.selected_color && <span>• {item.selected_color}</span>}
+                    </div>
                   </div>
                   <span className="text-xs font-bold text-slate-900">
                     ${Number(item.total_price).toFixed(2)}

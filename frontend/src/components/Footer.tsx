@@ -63,10 +63,10 @@ export const Footer: React.FC = () => {
               <span className="text-xl font-bold text-white tracking-tight">ShopEase</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Your one-stop destination for world-class electronics, fashion, lifestyle goods, and everyday modern essentials.
+              Your premier destination for contemporary fashion, luxury tailoring, outerwear, and artisanal footwear.
             </p>
             <div className="pt-2 text-xs text-slate-500">
-              Technology: Next.js Frontend + Python Django REST Backend
+              Technology: Next.js Frontend + Python Flask REST Backend + MySQL
             </div>
           </div>
 

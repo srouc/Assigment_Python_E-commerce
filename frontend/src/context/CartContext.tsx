@@ -7,7 +7,7 @@ interface CartContextType {
   loading: boolean;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
-  addToCart: (productId: number, quantity?: number) => Promise<void>;
+  addToCart: (productId: number, quantity?: number, size?: string, color?: string) => Promise<void>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -35,10 +35,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshCart();
   }, [refreshCart]);
 
-  const addToCart = async (productId: number, quantity = 1) => {
+  const addToCart = async (productId: number, quantity = 1, size?: string, color?: string) => {
     setLoading(true);
     try {
-      const res = await cartService.addToCart(productId, quantity);
+      const res = await cartService.addToCart(productId, quantity, size, color);
       setCart(res.cart);
       setIsCartOpen(true);
     } finally {
@@ -99,4 +99,3 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useCart = () => useContext(CartContext);
-

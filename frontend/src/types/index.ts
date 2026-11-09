@@ -46,7 +46,7 @@ export interface Product {
   rating: number | string;
   reviews_count: number;
   sizes?: string[];
-  colors?: ProductColor[];
+  colors?: (ProductColor | string)[];
   main_image?: string;
   main_image_url?: string;
   display_image: string;
@@ -58,13 +58,17 @@ export interface Product {
 export interface User {
   id: number;
   email: string;
+  first_name?: string;
+  last_name?: string;
   full_name: string;
   name: string;
   phone_number?: string;
   avatar?: string;
+  role?: string;
   is_admin_user: boolean;
   is_staff: boolean;
-  created_at: string;
+  addresses?: Address[];
+  created_at?: string;
 }
 
 export interface Address {
@@ -109,14 +113,15 @@ export interface Coupon {
 
 export interface OrderItem {
   id: number;
-  product_id: number;
+  product?: number | Product;
+  product_id?: number;
   product_name: string;
   product_image?: string;
   price: string | number;
   quantity: number;
   selected_size?: string;
   selected_color?: string;
-  subtotal: string | number;
+  subtotal?: string | number;
   total_price?: string | number;
 }
 
@@ -124,6 +129,8 @@ export interface Order {
   id: number;
   order_number: string;
   user?: number | User;
+  customer_name?: string;
+  customer_email?: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   status_display?: string;
   subtotal: string | number;
@@ -134,12 +141,15 @@ export interface Order {
   coupon_code?: string;
   payment_method: 'aba_khqr' | 'cod' | 'card' | 'paypal';
   payment_method_display?: string;
-  payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded';
+  payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded' | 'pending';
   payment_status_display?: string;
   shipping_name: string;
   shipping_phone: string;
   shipping_address: string;
   shipping_city: string;
+  shipping_state?: string;
+  shipping_postal_code?: string;
+  shipping_country?: string;
   shipping_notes?: string;
   items: OrderItem[];
   created_at: string;

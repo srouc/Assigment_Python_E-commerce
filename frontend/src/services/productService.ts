@@ -52,8 +52,12 @@ export const productService = {
     }
 
     if (params?.color) {
+      const filterCol = params.color.toLowerCase();
       products = products.filter((p) =>
-        p.colors?.some((c) => c.name.toLowerCase() === params.color!.toLowerCase())
+        p.colors?.some((c) => {
+          const cName = typeof c === 'string' ? c : (c?.name || '');
+          return cName.toLowerCase() === filterCol;
+        })
       );
     }
 

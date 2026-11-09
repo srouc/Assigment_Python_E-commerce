@@ -10,6 +10,65 @@ interface ProductCardProps {
   product: Product;
 }
 
+const COLOR_MAP: Record<string, string> = {
+  black: '#0f172a',
+  'midnight black': '#0f172a',
+  white: '#ffffff',
+  ivory: '#fdfbf7',
+  cream: '#fef08a',
+  navy: '#1e293b',
+  'deep navy': '#1e293b',
+  silver: '#cbd5e1',
+  'platinum silver': '#cbd5e1',
+  grey: '#64748b',
+  gray: '#64748b',
+  camel: '#c19a6b',
+  beige: '#d4b996',
+  tan: '#d2b48c',
+  emerald: '#065f46',
+  'olive green': '#556b2f',
+  olive: '#556b2f',
+  burgundy: '#881337',
+  wine: '#881337',
+  red: '#dc2626',
+  pink: '#f472b6',
+  'blush pink': '#fbcfe8',
+  rose: '#f43f5e',
+  blue: '#2563eb',
+  sky: '#0ea5e9',
+  indigo: '#4f46e5',
+  violet: '#7c3aed',
+  purple: '#9333ea',
+  amber: '#f59e0b',
+  gold: '#d97706',
+  brown: '#78350f',
+  charcoal: '#334155',
+};
+
+const resolveColorHex = (c: any): string => {
+  if (!c) return '#475569';
+  if (typeof c === 'string') {
+    const trimmed = c.trim().toLowerCase();
+    if (trimmed.startsWith('#')) return c.trim();
+    return COLOR_MAP[trimmed] || '#475569';
+  }
+  if (typeof c === 'object') {
+    if (c.hex && typeof c.hex === 'string') return c.hex;
+    if (c.name && typeof c.name === 'string') {
+      const trimmed = c.name.trim().toLowerCase();
+      return COLOR_MAP[trimmed] || '#475569';
+    }
+  }
+  return '#475569';
+};
+
+const resolveColorName = (c: any): string => {
+  if (!c) return 'Standard';
+  if (typeof c === 'string') return c;
+  if (typeof c === 'object' && c.name) return String(c.name);
+  return 'Standard';
+};
+
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { showToast } = useToast();
@@ -18,7 +77,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.preventDefault();
     e.stopPropagation();
     const defaultSize = product.sizes?.[0] || 'M';
-    const defaultColor = product.colors?.[0]?.name || 'Standard';
+    const firstCol = product.colors?.[0];
+    const defaultColor = resolveColorName(firstCol);
     await addToCart(product.id, 1, defaultSize, defaultColor);
     showToast(`Added ${product.name} (${defaultSize} / ${defaultColor}) to bag!`, 'success');
   };
@@ -88,14 +148,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
           {/* Color Dots */}
           <div className="flex items-center gap-1.5">
-            {product.colors?.slice(0, 4).map((c, idx) => (
-              <span
-                key={idx}
-                title={c.name}
-                className="w-3 h-3 rounded-full border border-slate-300 shadow-xs"
-                style={{ backgroundColor: c.hex }}
-              />
-            ))}
+            {product.colors?.slice(0, 4).map((c, idx) => {
+              const colName = resolveColorName(c);
+              const colHex = resolveColorHex(c);
+              return (
+                <span
+                  key={idx}
+                  title={colName}
+                  className="w-3 h-3 rounded-full border border-slate-300 shadow-xs"
+                  style={{ backgroundColor: colHex }}
+                />
+              );
+            })}
             {(product.colors?.length || 0) > 4 && (
               <span className="text-[10px] text-slate-400 font-bold">
                 +{product.colors!.length - 4}

@@ -238,8 +238,8 @@ export const orderService = {
     } catch {
       const all = await orderService.getAllOrdersAdmin();
       const found = all.find((o) => o.id === orderId) || all[0];
-      if (status) found.status = status;
-      if (paymentStatus) found.payment_status = paymentStatus;
+      if (status) found.status = status as any;
+      if (paymentStatus) found.payment_status = paymentStatus as any;
       return found;
     }
   }

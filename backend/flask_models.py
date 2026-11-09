@@ -127,6 +127,33 @@ class Product(db.Model):
         price_flt = float(self.price or 0.0)
         orig_price_flt = float(self.original_price) if self.original_price else None
 
+        parsed_colors = parse_json(self.colors, [])
+        normalized_colors = []
+        if isinstance(parsed_colors, list):
+            hex_map = {
+                'black': '#111827', 'midnight black': '#0f172a', 'obsidian black': '#020617', 'triple black': '#000000',
+                'white': '#ffffff', 'pure white': '#ffffff',
+                'silver': '#cbd5e1', 'platinum silver': '#e2e8f0', 'gray': '#64748b', 'grey': '#64748b',
+                'navy': '#1e3a8a', 'deep navy': '#0f172a', 'blue': '#2563eb',
+                'brown': '#78350f', 'cognac brown': '#9a3412', 'espresso': '#451a03',
+                'red': '#dc2626', 'crimson': '#991b1b', 'gold': '#f59e0b', 'champagne': '#fef08a',
+                'green': '#16a34a', 'olive': '#4d7c0f', 'beige': '#f5f5dc', 'cream': '#fef9c3',
+                'rose': '#fb7185', 'pink': '#f472b6', 'purple': '#9333ea', 'indigo': '#4f46e5'
+            }
+            for c in parsed_colors:
+                if isinstance(c, dict):
+                    name = c.get('name') or c.get('color') or 'Standard'
+                    hex_val = c.get('hex') or c.get('code') or '#111827'
+                    normalized_colors.append({'name': name, 'hex': hex_val})
+                elif isinstance(c, str):
+                    c_lower = c.lower()
+                    found_hex = None
+                    for k, v in hex_map.items():
+                        if k in c_lower:
+                            found_hex = v
+                            break
+                    normalized_colors.append({'name': c, 'hex': found_hex or '#475569'})
+
         data = {
             'id': self.id,
             'name': self.name,
@@ -150,7 +177,7 @@ class Product(db.Model):
             'main_image_url': main_img,
             'display_image': main_img,
             'images': img_list,
-            'colors': parse_json(self.colors, []),
+            'colors': normalized_colors,
             'sizes': parse_json(self.sizes, []),
             'specifications': parse_json(self.specifications, {}),
             'warranty': self.warranty or '',

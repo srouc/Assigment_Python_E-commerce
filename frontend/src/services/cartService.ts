@@ -65,12 +65,14 @@ export const cartService = {
       cart.items[existingIndex].total_price =
         Number(product.price) * cart.items[existingIndex].quantity;
     } else {
+      const firstCol = product.colors?.[0];
+      const defaultCol = typeof firstCol === 'string' ? firstCol : (firstCol?.name || 'Default');
       const newItem: CartItem = {
         id: Date.now(),
         product,
         quantity,
         selected_size: size || product.sizes?.[0] || 'M',
-        selected_color: color || product.colors?.[0]?.name || 'Default',
+        selected_color: color || defaultCol,
         total_price: Number(product.price) * quantity,
         created_at: new Date().toISOString(),
       };

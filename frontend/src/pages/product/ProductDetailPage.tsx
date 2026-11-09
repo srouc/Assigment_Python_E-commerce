@@ -20,6 +20,65 @@ import { Product } from '../../types';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 
+const COLOR_MAP: Record<string, string> = {
+  black: '#0f172a',
+  'midnight black': '#0f172a',
+  white: '#ffffff',
+  ivory: '#fdfbf7',
+  cream: '#fef08a',
+  navy: '#1e293b',
+  'deep navy': '#1e293b',
+  silver: '#cbd5e1',
+  'platinum silver': '#cbd5e1',
+  grey: '#64748b',
+  gray: '#64748b',
+  camel: '#c19a6b',
+  beige: '#d4b996',
+  tan: '#d2b48c',
+  emerald: '#065f46',
+  'olive green': '#556b2f',
+  olive: '#556b2f',
+  burgundy: '#881337',
+  wine: '#881337',
+  red: '#dc2626',
+  pink: '#f472b6',
+  'blush pink': '#fbcfe8',
+  rose: '#f43f5e',
+  blue: '#2563eb',
+  sky: '#0ea5e9',
+  indigo: '#4f46e5',
+  violet: '#7c3aed',
+  purple: '#9333ea',
+  amber: '#f59e0b',
+  gold: '#d97706',
+  brown: '#78350f',
+  charcoal: '#334155',
+};
+
+const resolveColorHex = (c: any): string => {
+  if (!c) return '#475569';
+  if (typeof c === 'string') {
+    const trimmed = c.trim().toLowerCase();
+    if (trimmed.startsWith('#')) return c.trim();
+    return COLOR_MAP[trimmed] || '#475569';
+  }
+  if (typeof c === 'object') {
+    if (c.hex && typeof c.hex === 'string') return c.hex;
+    if (c.name && typeof c.name === 'string') {
+      const trimmed = c.name.trim().toLowerCase();
+      return COLOR_MAP[trimmed] || '#475569';
+    }
+  }
+  return '#475569';
+};
+
+const resolveColorName = (c: any): string => {
+  if (!c) return 'Standard';
+  if (typeof c === 'string') return c;
+  if (typeof c === 'object' && c.name) return String(c.name);
+  return 'Standard';
+};
+
 export default function ProductDetailPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -46,7 +105,9 @@ export default function ProductDetailPage() {
           setSelectedSize(data.sizes[0]);
         }
         if (data.colors && data.colors.length > 0) {
-          setSelectedColor(data.colors[0].name);
+          const firstCol = data.colors[0];
+          const colName = resolveColorName(firstCol);
+          setSelectedColor(colName);
         }
       } catch (err) {
         console.error('Failed fetching product', err);
@@ -200,27 +261,28 @@ export default function ProductDetailPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      {product.colors.map((color) => {
-                        const isSelected = selectedColor === color.name;
+                      {product.colors.map((colorItem, idx) => {
+                        const colName = resolveColorName(colorItem);
+                        const colHex = resolveColorHex(colorItem);
+                        const isSelected = selectedColor === colName;
+                        const isLightColor = ['#FDFBF7', '#FDE68A', '#FFFFFF'].includes(colHex.toUpperCase());
                         return (
                           <button
-                            key={color.name}
+                            key={colName || idx}
                             type="button"
-                            onClick={() => setSelectedColor(color.name)}
-                            title={color.name}
+                            onClick={() => setSelectedColor(colName)}
+                            title={colName}
                             className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                               isSelected
                                 ? 'ring-2 ring-indigo-600 ring-offset-2 scale-110 shadow-md'
                                 : 'hover:scale-105 border border-slate-300'
                             }`}
-                            style={{ backgroundColor: color.hex }}
+                            style={{ backgroundColor: colHex }}
                           >
                             {isSelected && (
                               <Check
                                 className={`w-4 h-4 ${
-                                  ['#FDFBF7', '#FDE68A', '#FFFFFF'].includes(color.hex.toUpperCase())
-                                    ? 'text-slate-900'
-                                    : 'text-white'
+                                  isLightColor ? 'text-slate-900' : 'text-white'
                                 }`}
                               />
                             )}

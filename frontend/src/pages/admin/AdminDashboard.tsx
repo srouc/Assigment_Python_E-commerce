@@ -352,7 +352,7 @@ export const AdminDashboard: React.FC = () => {
                     <tr key={p.id} className="hover:bg-slate-900/50 transition-colors">
                       <td className="py-3 px-4 flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0">
-                          <Image src={p.display_image} alt="" fill className="object-cover" />
+                          <Image src={p.display_image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'} alt={p.name} fill className="object-cover" unoptimized />
                         </div>
                         <div>
                           <div className="font-semibold text-white line-clamp-1">{p.name}</div>

@@ -395,10 +395,11 @@ export const CheckoutPage: React.FC = () => {
                 <div key={item.id} className="py-3 flex items-center gap-3">
                   <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
                     <Image
-                      src={item.product.display_image}
+                      src={item.product.display_image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}
                       alt={item.product.name}
                       fill
                       className="object-cover"
+                      unoptimized
                     />
                   </div>
                   <div className="flex-1 min-w-0">

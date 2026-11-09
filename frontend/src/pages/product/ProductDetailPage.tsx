@@ -148,20 +148,20 @@ export default function ProductDetailPage() {
 
   return (
     <MainLayout title={`${product.name} — ShopEase Fashion`}>
-      <div className="bg-slate-50 min-h-screen py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-slate-50 min-h-screen py-4 sm:py-10">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           
           {/* Breadcrumb Navigation */}
-          <nav className="flex items-center gap-2 text-xs text-slate-500 mb-8">
+          <nav className="flex items-center gap-2 text-xs text-slate-500 mb-4 sm:mb-8">
             <Link href="/" className="hover:text-indigo-600">Home</Link>
             <span>/</span>
             <Link href="/shop" className="hover:text-indigo-600">Fashion Catalog</Link>
             <span>/</span>
-            <span className="text-slate-900 font-bold truncate max-w-xs">{product.name}</span>
+            <span className="text-slate-900 font-bold truncate max-w-[150px] sm:max-w-xs">{product.name}</span>
           </nav>
 
           {/* Main Product Section: Split Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-xs">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 bg-white rounded-3xl p-4 sm:p-8 lg:p-10 border border-slate-200/80 shadow-xs">
             
             {/* Left Column: Image Gallery (7 cols) */}
             <div className="lg:col-span-7 flex flex-col-reverse sm:flex-row gap-4">
@@ -383,6 +383,23 @@ export default function ProductDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile Sticky Add-to-Bag Bottom Action Bar */}
+        <div className="fixed bottom-12 inset-x-0 z-30 md:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-3 shadow-lg flex items-center justify-between gap-3">
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] text-slate-500 truncate">{product.name}</span>
+            <span className="text-base font-black text-indigo-600 font-mono">
+              ${(Number(product.price) * quantity).toFixed(2)}
+            </span>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            className="py-2.5 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 flex items-center gap-2 active:scale-95 transition-all"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Add To Bag
+          </button>
         </div>
       </div>
     </MainLayout>

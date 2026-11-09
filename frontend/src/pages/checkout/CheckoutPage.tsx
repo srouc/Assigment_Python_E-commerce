@@ -174,16 +174,16 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <MainLayout title="Checkout | ShopEase">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-8">Checkout</h1>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-6 sm:mb-8">Checkout</h1>
 
-        <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
           {/* Shipping & Payment Form */}
-          <div className="lg:col-span-7 space-y-8">
+          <div className="lg:col-span-7 space-y-6 sm:space-y-8">
             
             {/* Step 1: Shipping Details */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-8 shadow-sm space-y-4">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-indigo-600" />
                 Shipping Information

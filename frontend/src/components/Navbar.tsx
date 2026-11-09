@@ -60,19 +60,19 @@ export const Navbar: React.FC = () => {
 
       {/* Main Sticky Navigation */}
       <header className="glass-panel border-b border-slate-200/80 shadow-sm transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-20 gap-2 sm:gap-4">
             
             {/* Brand Logo */}
-            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-                <ShoppingBag className="w-5 h-5" />
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 group">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-700 bg-clip-text text-transparent">
+                <span className="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-700 bg-clip-text text-transparent">
                   ShopEase
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 -mt-1 tracking-widest uppercase">
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 -mt-1 tracking-widest uppercase">
                   Fashion Studio
                 </span>
               </div>

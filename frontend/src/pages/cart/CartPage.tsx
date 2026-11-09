@@ -49,11 +49,11 @@ export const CartPage: React.FC = () => {
 
   return (
     <MainLayout title="Shopping Bag — ShopEase Fashion">
-      <div className="bg-slate-50 min-h-screen py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-slate-50 min-h-screen py-6 sm:py-12">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           
-          <div className="mb-8">
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Shopping Bag</h1>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Shopping Bag</h1>
             <p className="text-xs text-slate-500 mt-1">Review your curated garments and accessories before checkout.</p>
           </div>
 
@@ -78,7 +78,7 @@ export const CartPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               {/* Left Column: Cart Items List (8 cols) */}
-              <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs divide-y divide-slate-100">
+              <div className="lg:col-span-8 bg-white rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs divide-y divide-slate-100">
                 {/* Free Delivery Bar */}
                 <div className="pb-4 text-xs font-semibold">
                   {remainingForFreeShipping > 0 ? (
@@ -162,7 +162,7 @@ export const CartPage: React.FC = () => {
               </div>
 
               {/* Right Column: Order Summary (4 cols) */}
-              <div className="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+              <div className="lg:col-span-4 bg-white rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
                 <h2 className="text-lg font-black text-slate-900">Order Summary</h2>
 
                 {/* Coupon Code Input */}

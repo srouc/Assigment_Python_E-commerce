@@ -196,7 +196,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-slate-950 border border-slate-800/80 p-5 rounded-2xl flex items-center justify-between">
             <div>
               <span className="text-xs font-medium text-slate-400">Total Paid Revenue</span>
@@ -427,8 +427,8 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Add Product Modal */}
       {showProductModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white">Add New Product</h3>
             <form onSubmit={handleCreateProduct} className="space-y-3">
               <div>
@@ -534,8 +534,8 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Add Coupon Modal */}
       {showCouponModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 max-w-sm w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white">Create Promo Coupon</h3>
             <form onSubmit={handleCreateCoupon} className="space-y-3">
               <div>

@@ -12,16 +12,12 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      orderService
-        .getMyOrders()
-        .then(setOrders)
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    } else if (!authLoading) {
-      setLoading(false);
-    }
-  }, [isAuthenticated, authLoading]);
+    orderService
+      .getMyOrders()
+      .then(setOrders)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [isAuthenticated]);
 
   return (
     <MainLayout title="My Orders | ShopEase">
@@ -30,7 +26,7 @@ export default function OrdersPage() {
           Order History & Tracking
         </h1>
 
-        {!isAuthenticated ? (
+        {!isAuthenticated && orders.length === 0 ? (
           <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm">
             <Package className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-slate-800">Sign in to view your orders</h2>

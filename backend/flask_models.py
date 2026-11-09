@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import db
@@ -26,6 +27,13 @@ class Category(db.Model):
     image = db.Column(db.String(500), nullable=True)
     icon = db.Column(db.String(50), default='Tag')
     product_count = db.Column(db.Integer, default=0)
+
+    def __init__(self, **kwargs):
+        if 'image_url' in kwargs and 'image' not in kwargs:
+            self.image = kwargs.pop('image_url')
+        if 'id' not in kwargs:
+            self.id = str(uuid.uuid4())[:8]
+        super().__init__(**kwargs)
 
     def to_dict(self):
         return {
@@ -74,6 +82,33 @@ class Product(db.Model):
     return_policy = db.Column(db.String(255), default='')
     tags = db.Column(db.Text, default='[]')
     created_at = db.Column(db.DateTime, default=utc_now)
+
+    def __init__(self, **kwargs):
+        if 'id' not in kwargs:
+            self.id = str(uuid.uuid4())[:8]
+        if 'stock_quantity' in kwargs:
+            self.stock = kwargs.pop('stock_quantity')
+        if 'compare_at_price' in kwargs:
+            self.original_price = kwargs.pop('compare_at_price')
+        if 'short_description' in kwargs:
+            self.description = kwargs.pop('short_description')
+        if 'description' in kwargs and 'full_description' not in kwargs:
+            self.full_description = kwargs.get('description')
+        if 'reviews_count' in kwargs:
+            self.review_count = kwargs.pop('reviews_count')
+        if 'category_id' in kwargs:
+            kwargs.pop('category_id')
+        if 'is_active' in kwargs:
+            kwargs.pop('is_active')
+        if 'sku' in kwargs:
+            kwargs.pop('sku')
+        if 'main_image_url' in kwargs:
+            m_img = kwargs.pop('main_image_url')
+            if ('images' not in kwargs or not kwargs['images']) and m_img:
+                self.images = json.dumps([m_img])
+        if 'category' not in kwargs:
+            self.category = 'Fashion'
+        super().__init__(**kwargs)
 
     def to_dict(self, detail=False):
         parsed_imgs = parse_json(self.images, [])
@@ -126,6 +161,56 @@ class Product(db.Model):
         }
         return data
 
+class ProductImage(db.Model):
+    __tablename__ = 'product_images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.String(50), nullable=False)
+    image = db.Column(db.String(500), nullable=False)
+    alt_text = db.Column(db.String(255), default='')
+
+    def __init__(self, **kwargs):
+        if 'image_url' in kwargs and 'image' not in kwargs:
+            self.image = kwargs.pop('image_url')
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'image': self.image,
+            'image_url': self.image,
+            'display_image': self.image,
+            'alt_text': self.alt_text or ''
+        }
+
+class Address(db.Model):
+    __tablename__ = 'addresses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50), nullable=True)
+    full_name = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(50), nullable=False)
+    street_address = db.Column(db.String(500), nullable=False)
+    city = db.Column(db.String(100), default='Phnom Penh')
+    state = db.Column(db.String(100), default='Phnom Penh')
+    postal_code = db.Column(db.String(20), default='12000')
+    country = db.Column(db.String(100), default='Cambodia')
+    is_default = db.Column(db.Boolean, default=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'full_name': self.full_name,
+            'phone_number': self.phone_number,
+            'street_address': self.street_address,
+            'city': self.city,
+            'state': self.state,
+            'postal_code': self.postal_code,
+            'country': self.country,
+            'is_default': self.is_default
+        }
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -139,6 +224,22 @@ class User(db.Model):
     avatar = db.Column(db.String(500), nullable=True)
     addresses = db.Column(db.Text, default='[]')
     created_at = db.Column(db.DateTime, default=utc_now)
+
+    def __init__(self, **kwargs):
+        if 'full_name' in kwargs:
+            fn = kwargs.pop('full_name')
+            parts = fn.split(' ', 1)
+            self.first_name = parts[0]
+            self.last_name = parts[1] if len(parts) > 1 else ''
+        if 'phone_number' in kwargs:
+            self.phone = kwargs.pop('phone_number')
+        is_adm = kwargs.pop('is_admin_user', None)
+        is_stf = kwargs.pop('is_staff', None)
+        if is_adm or is_stf:
+            self.role = 'admin'
+        if 'id' not in kwargs:
+            self.id = str(uuid.uuid4())[:8]
+        super().__init__(**kwargs)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -169,9 +270,19 @@ class User(db.Model):
     def is_admin_user(self):
         return self.role in ['admin', 'staff', 'superuser']
 
+    @is_admin_user.setter
+    def is_admin_user(self, val):
+        if val:
+            self.role = 'admin'
+
     @property
     def is_staff(self):
         return self.is_admin_user
+
+    @is_staff.setter
+    def is_staff(self, val):
+        if val:
+            self.role = 'admin'
 
     @property
     def is_active(self):

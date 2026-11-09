@@ -20,6 +20,7 @@ import { orderService } from '../../services/orderService';
 import { couponService } from '../../services/couponService';
 import { useToast } from '../../context/ToastContext';
 import { Product, Order, Category, Coupon } from '../../types';
+import { MOCK_CATEGORIES } from '../../data/fashionMockData';
 
 export const AdminDashboard: React.FC = () => {
   const router = useRouter();
@@ -29,13 +30,13 @@ export const AdminDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(MOCK_CATEGORIES);
   const [loading, setLoading] = useState(true);
 
   // New Product Modal Form
   const [showProductModal, setShowProductModal] = useState(false);
   const [newProdName, setNewProdName] = useState('');
-  const [newProdCategory, setNewProdCategory] = useState<number | string>('');
+  const [newProdCategory, setNewProdCategory] = useState<number | string>(MOCK_CATEGORIES[0]?.id || 1);
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('10');
   const [newProdImage, setNewProdImage] = useState('');
@@ -52,25 +53,35 @@ export const AdminDashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [prods, ords, cats, coups] = await Promise.all([
+      const [prodsRes, ordsRes, catsRes, coupsRes] = await Promise.allSettled([
         productService.getProducts({ admin: true }),
         orderService.getAllOrdersAdmin(),
         productService.getCategories(),
         couponService.getAllCouponsAdmin(),
       ]);
-      setProducts(prods);
-      setOrders(ords);
-      setCategories(cats);
-      setCoupons(coups);
-      if (cats.length > 0 && !newProdCategory) {
-        setNewProdCategory(cats[0].id);
+
+      if (prodsRes.status === 'fulfilled' && prodsRes.value.length > 0) {
+        setProducts(prodsRes.value);
+      }
+      if (ordsRes.status === 'fulfilled') {
+        setOrders(ordsRes.value);
+      }
+      if (catsRes.status === 'fulfilled' && catsRes.value.length > 0) {
+        setCategories(catsRes.value);
+        setNewProdCategory((prev) => prev || catsRes.value[0].id);
+      } else {
+        setCategories(MOCK_CATEGORIES);
+      }
+      if (coupsRes.status === 'fulfilled') {
+        setCoupons(coupsRes.value);
       }
     } catch (err) {
       console.error('Error fetching admin data', err);
+      setCategories(MOCK_CATEGORIES);
     } finally {
       setLoading(false);
     }
-  }, [newProdCategory]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -96,24 +107,29 @@ export const AdminDashboard: React.FC = () => {
 
     setSavingProduct(true);
     try {
-      await productService.createProduct({
+      const selectedCat = categories.find((c) => String(c.id) === String(newProdCategory)) || categories[0];
+      const created = await productService.createProduct({
         name: newProdName,
-        category: Number(newProdCategory),
+        category: selectedCat ? (typeof selectedCat.id === 'number' ? selectedCat.id : selectedCat.slug) : newProdCategory,
+        category_name: selectedCat?.name || 'Fashion & Apparel',
+        category_slug: selectedCat?.slug || 'fashion-apparel',
         price: newProdPrice,
         stock_quantity: Number(newProdStock),
         main_image_url: newProdImage || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60',
         description: newProdDesc || `${newProdName} premium product.`,
         short_description: newProdDesc?.slice(0, 100) || `${newProdName} premium product.`,
       });
-      showToast('Product created successfully!', 'success');
+      setProducts((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+      showToast(`Product "${created.name}" created successfully!`, 'success');
       setShowProductModal(false);
       setNewProdName('');
       setNewProdPrice('');
       setNewProdImage('');
       setNewProdDesc('');
-      fetchData();
-    } catch {
-      showToast('Failed to create product', 'error');
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || 'Failed to create product';
+      showToast(msg, 'error');
     } finally {
       setSavingProduct(false);
     }
@@ -433,11 +449,17 @@ export const AdminDashboard: React.FC = () => {
                   <select
                     value={newProdCategory}
                     onChange={(e) => setNewProdCategory(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 cursor-pointer"
                   >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {categories.length === 0 ? (
+                      <option value="" disabled className="bg-slate-900 text-slate-400">Loading categories...</option>
+                    ) : (
+                      categories.map((c) => (
+                        <option key={c.id} value={c.id} className="bg-slate-900 text-white py-1">
+                          {c.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

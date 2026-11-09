@@ -1,5 +1,5 @@
 export interface Category {
-  id: number;
+  id: number | string;
   name: string;
   slug: string;
   description: string;
@@ -29,7 +29,7 @@ export interface Product {
   id: number;
   name: string;
   slug: string;
-  category: number | Category;
+  category: number | string | Category;
   category_name?: string;
   category_slug?: string;
   brand: string;

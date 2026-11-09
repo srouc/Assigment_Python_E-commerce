@@ -344,3 +344,4 @@ export const MOCK_COUPONS: Record<string, Coupon> = {
     min_spend: 100,
   },
 };
+

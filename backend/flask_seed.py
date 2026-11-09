@@ -236,6 +236,8 @@ def seed_database():
         if not product:
             cat = cat_map.get(pdata['category'])
             product = Product(
+                category=cat.name if cat else pdata.get('category', 'Fashion'),
+                category_slug=cat.slug if cat else 'fashion',
                 category_id=cat.id if cat else 1,
                 name=pdata['name'],
                 slug=p_slug,
@@ -307,3 +309,10 @@ def seed_database():
 
     db.session.commit()
     print("[+] ShopEase Flask database seeded successfully!")
+
+if __name__ == '__main__':
+    from app import create_app
+    app = create_app()
+    with app.app_context():
+        db.create_all()
+        seed_database()

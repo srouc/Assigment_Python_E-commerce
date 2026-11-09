@@ -22,19 +22,26 @@ def create_app():
     # --------------------------------------------------------------------------
     # Database Configuration: MySQL (phpMyAdmin / XAMPP)
     # --------------------------------------------------------------------------
+    mysql_uri = 'mysql+pymysql://root:@127.0.0.1:3306/shopease_db?charset=utf8mb4'
     db_uri = os.environ.get('DATABASE_URL')
     if not db_uri:
-        import socket
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.5)
-            s.connect(('127.0.0.1', 3306))
-            s.close()
-            db_uri = 'mysql+pymysql://root:@127.0.0.1:3306/shopease_db?charset=utf8mb4'
-            print("[INFO] Connected to MySQL on port 3306 (shopease_db)")
-        except Exception:
+            import pymysql
+            test_conn = pymysql.connect(
+                host='127.0.0.1',
+                port=3306,
+                user='root',
+                password='',
+                database='shopease_db',
+                charset='utf8mb4',
+                connect_timeout=2
+            )
+            test_conn.close()
+            db_uri = mysql_uri
+            print("[INFO] [+] CONNECTED TO MYSQL PHPMYADMIN: shopease_db (127.0.0.1:3306)")
+        except Exception as e:
             db_uri = f'sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), "shopease_flask.db")}'
-            print("[INFO] MySQL offline, using SQLite fallback: shopease_flask.db")
+            print(f"[INFO] MySQL offline ({e}), using SQLite fallback: shopease_flask.db")
     
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

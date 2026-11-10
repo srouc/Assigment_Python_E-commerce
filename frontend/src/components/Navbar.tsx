@@ -11,7 +11,6 @@ import {
   Package,
   Sparkles,
   ArrowRight,
-  Palette,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -116,26 +115,6 @@ export const Navbar: React.FC = () => {
                 }`}
               >
                 Shop All
-              </Link>
-              <Link
-                href="/design-system"
-                className={`inline-flex items-center gap-1.5 py-1 transition-colors hover:text-indigo-600 ${
-                  router.pathname === '/design-system' ? 'text-indigo-600 font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-600 after:rounded-full' : ''
-                }`}
-              >
-                <Palette className="w-3.5 h-3.5 text-indigo-500" />
-                UI/UX Design
-              </Link>
-              <Link
-                href="/khqr"
-                className={`inline-flex items-center gap-1.5 py-1 transition-colors hover:text-red-600 ${
-                  router.pathname === '/khqr' ? 'text-red-600 font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-red-600 after:rounded-full' : ''
-                }`}
-              >
-                <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black tracking-wider">
-                  KHQR
-                </span>
-                Pay
               </Link>
               {isAuthenticated && (
                 <Link
@@ -282,22 +261,6 @@ export const Navbar: React.FC = () => {
                   className="px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100"
                 >
                   Shop Catalog
-                </Link>
-                <Link
-                  href="/design-system"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-xl text-indigo-600 font-bold hover:bg-indigo-50 flex items-center gap-2"
-                >
-                  <Palette className="w-4 h-4 text-indigo-500" />
-                  UI/UX Design System
-                </Link>
-                <Link
-                  href="/khqr"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-xl text-red-600 font-bold hover:bg-red-50 flex items-center gap-2"
-                >
-                  <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black">KHQR</span>
-                  Bakong KHQR Generator
                 </Link>
                 {isAuthenticated && (
                   <Link

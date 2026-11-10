@@ -35,7 +35,7 @@ export const CheckoutPage: React.FC = () => {
   const [shippingPostalCode, setShippingPostalCode] = useState('12000');
   const [shippingCountry, setShippingCountry] = useState('Cambodia');
   const [guestEmail, setGuestEmail] = useState(user?.email || '');
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card' | 'aba_khqr' | 'paypal'>('aba_khqr');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card' | 'aba_khqr'>('aba_khqr');
   const [couponCode, setCouponCode] = useState<string>((queryCoupon as string) || '');
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [notes, setNotes] = useState('');
@@ -392,29 +392,6 @@ export const CheckoutPage: React.FC = () => {
                     <span className="text-xs text-slate-500">Visa, Mastercard, UnionPay.</span>
                   </div>
                 </label>
-
-                {/* PayPal */}
-                <label
-                  className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
-                    paymentMethod === 'paypal'
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="paypal"
-                    checked={paymentMethod === 'paypal'}
-                    onChange={() => setPaymentMethod('paypal')}
-                    className="mt-1 text-indigo-600"
-                  />
-                  <div>
-                    <span className="text-sm font-bold text-slate-800 block">PayPal</span>
-                    <span className="text-xs text-slate-500">Pay safely with your PayPal account.</span>
-                  </div>
-                </label>
-
               </div>
             </div>
 

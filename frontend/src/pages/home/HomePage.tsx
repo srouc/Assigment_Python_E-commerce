@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { ProductCard } from '../../components/ProductCard';
+import { LightningDeals } from '../../components/LightningDeals';
 import { productService } from '../../services/productService';
 import { Product, Category } from '../../types';
 import { useToast } from '../../context/ToastContext';
@@ -195,6 +196,9 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* 2.5 ⚡ Lightning Deals / Flash Sale Section */}
+      <LightningDeals products={featuredProducts} />
 
       {/* 3. Shop by Category Grid */}
       <section className="py-16 bg-slate-50">

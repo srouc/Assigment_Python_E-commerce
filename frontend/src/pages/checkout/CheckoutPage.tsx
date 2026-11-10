@@ -10,6 +10,9 @@ import {
   CheckCircle2,
   ArrowRight,
   ShoppingBag,
+  Lock,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { useCart } from '../../context/CartContext';
@@ -83,6 +86,12 @@ export const CheckoutPage: React.FC = () => {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      showToast('Please sign in or create an account to place an order.', 'error');
+      router.push('/auth/login?redirect=/checkout');
+      return;
+    }
+
     if (items.length === 0) {
       showToast('Your cart is empty', 'error');
       return;
@@ -206,11 +215,65 @@ export const CheckoutPage: React.FC = () => {
 
         <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
-          {/* Shipping & Payment Form */}
+          {/* Shipping & Payment Form / Auth Barrier */}
           <div className="lg:col-span-7 space-y-6 sm:space-y-8">
             
-            {/* Step 1: Shipping Details */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-8 shadow-sm space-y-4">
+            {!isAuthenticated ? (
+              <div className="bg-white border-2 border-indigo-100 rounded-3xl p-6 sm:p-10 shadow-sm text-center space-y-6">
+                <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center mx-auto shadow-inner">
+                  <Lock className="w-8 h-8" />
+                </div>
+
+                <div className="max-w-md mx-auto space-y-2">
+                  <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-black uppercase tracking-wider border border-rose-200 inline-block">
+                    Account Required (តម្រូវឱ្យមានគណនី)
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    សូមចូលគណនីដើម្បីធ្វើការបញ្ជាទិញ
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                    អ្នកត្រូវតែមានគណនី ShopEase និង Login ជាមុនសិន ទើបអាចបំពេញព័ត៌មានដឹកជញ្ជូន និងបង់ប្រាក់តាម ABA KHQR បាន។
+                  </p>
+                </div>
+
+                {/* Account perks */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <span className="text-indigo-600 font-black text-xs block mb-1">📦 Live Tracking</span>
+                    <span className="text-[11px] text-slate-500 leading-snug">តាមដានទំនិញរហូតដល់មុខផ្ទះ</span>
+                  </div>
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <span className="text-red-600 font-black text-xs block mb-1">⚡ ABA KHQR Pay</span>
+                    <span className="text-[11px] text-slate-500 leading-snug">ស្កេនទូទាត់រហ័ស &amp; ឥតគិតថ្លៃ</span>
+                  </div>
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <span className="text-emerald-600 font-black text-xs block mb-1">🧾 Order History</span>
+                    <span className="text-[11px] text-slate-500 leading-snug">រក្សាទុកវិក្កយបត្រក្នុងគណនី</span>
+                  </div>
+                </div>
+
+                {/* CTAs */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                  <Link
+                    href="/auth/login?redirect=/checkout"
+                    className="flex-1 py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    ចូលគណនី (Sign In)
+                  </Link>
+                  <Link
+                    href="/auth/register?redirect=/checkout"
+                    className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    បង្កើតគណនីថ្មី (Register)
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Step 1: Shipping Details */}
+                <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-8 shadow-sm space-y-4">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-indigo-600" />
                 Shipping Information
@@ -394,8 +457,10 @@ export const CheckoutPage: React.FC = () => {
                 </label>
               </div>
             </div>
+          </>
+        )}
 
-          </div>
+      </div>
 
           {/* Order Summary Col */}
           <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
@@ -456,36 +521,46 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={placingOrder || items.length === 0}
-              className={`w-full py-4 px-6 rounded-2xl text-white font-bold text-sm shadow-xl flex items-center justify-center gap-2 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 transition-all ${
-                paymentMethod === 'aba_khqr'
-                  ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 shadow-red-600/25'
-                  : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
-              }`}
-            >
-              {placingOrder ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {paymentMethod === 'aba_khqr' ? 'Generating Real KHQR...' : 'Processing Order...'}
-                </>
-              ) : (
-                <>
-                  {paymentMethod === 'aba_khqr' ? (
-                    <>
-                      <QrCode className="w-4 h-4" />
-                      Place Order &amp; Pay via KHQR (${total.toFixed(2)})
-                    </>
-                  ) : (
-                    <>
-                      Place Order (${total.toFixed(2)})
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </>
-              )}
-            </button>
+            {isAuthenticated ? (
+              <button
+                type="submit"
+                disabled={placingOrder || items.length === 0}
+                className={`w-full py-4 px-6 rounded-2xl text-white font-bold text-sm shadow-xl flex items-center justify-center gap-2 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 transition-all ${
+                  paymentMethod === 'aba_khqr'
+                    ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 shadow-red-600/25'
+                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                }`}
+              >
+                {placingOrder ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {paymentMethod === 'aba_khqr' ? 'Generating Real KHQR...' : 'Processing Order...'}
+                  </>
+                ) : (
+                  <>
+                    {paymentMethod === 'aba_khqr' ? (
+                      <>
+                        <QrCode className="w-4 h-4" />
+                        Place Order &amp; Pay via KHQR (${total.toFixed(2)})
+                      </>
+                    ) : (
+                      <>
+                        Place Order (${total.toFixed(2)})
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </>
+                )}
+              </button>
+            ) : (
+              <Link
+                href="/auth/login?redirect=/checkout"
+                className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                <Lock className="w-4 h-4 text-white" />
+                Sign In to Place Order (${total.toFixed(2)})
+              </Link>
+            )}
 
             <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />

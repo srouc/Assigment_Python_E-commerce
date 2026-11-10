@@ -903,6 +903,9 @@ def create_app():
         user = get_user_from_jwt()
 
         if request.method == 'POST':
+            if not user:
+                return jsonify({'detail': 'Authentication required. Please sign in or create an account to place an order.'}), 401
+
             cart = get_current_cart()
             if not cart or not cart.items:
                 return jsonify({'detail': 'Your shopping cart is empty.'}), 400

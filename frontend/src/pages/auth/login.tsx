@@ -23,7 +23,8 @@ export default function LoginPage() {
     try {
       await login(email, password);
       showToast('Signed in successfully! Welcome back.', 'success');
-      router.push('/');
+      const target = (router.query.redirect as string) || '/';
+      router.push(target);
     } catch (err: any) {
       if (!err.response) {
         showToast('Backend server is not running! Please start Django on http://127.0.0.1:8000', 'error');
@@ -120,7 +121,10 @@ export default function LoginPage() {
 
           <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/register" className="font-semibold text-indigo-600 hover:underline">
+            <Link
+              href={router.query.redirect ? `/auth/register?redirect=${encodeURIComponent(router.query.redirect as string)}` : '/auth/register'}
+              className="font-semibold text-indigo-600 hover:underline"
+            >
               Create an account
             </Link>
           </div>

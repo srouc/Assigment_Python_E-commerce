@@ -34,7 +34,8 @@ export default function RegisterPage() {
         full_name: fullName,
       });
       showToast('Registration successful! Welcome to ShopEase.', 'success');
-      router.push('/');
+      const target = (router.query.redirect as string) || '/';
+      router.push(target);
     } catch (err: any) {
       if (!err.response) {
         showToast('Backend server is not running! Please start Django on http://127.0.0.1:8000', 'error');
@@ -150,7 +151,10 @@ export default function RegisterPage() {
 
           <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
             Already have an account?{' '}
-            <Link href="/auth/login" className="font-semibold text-indigo-600 hover:underline">
+            <Link
+              href={router.query.redirect ? `/auth/login?redirect=${encodeURIComponent(router.query.redirect as string)}` : '/auth/login'}
+              className="font-semibold text-indigo-600 hover:underline"
+            >
               Sign In
             </Link>
           </div>

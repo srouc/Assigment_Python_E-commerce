@@ -151,46 +151,46 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 2. Value Proposition Strip */}
-      <section className="bg-white border-y border-slate-200/80 py-8">
+      <section className="bg-white dark:bg-slate-900 border-y border-slate-200/80 dark:border-slate-800 py-8 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center md:text-left">
             <div className="flex flex-col md:flex-row items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+              <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400">
                 <Truck className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Free Express Delivery</h4>
-                <p className="text-[11px] text-slate-500">On all orders above $50</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">Free Express Delivery</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">On all orders above $50</p>
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+              <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">ABA KHQR &amp; COD</h4>
-                <p className="text-[11px] text-slate-500">100% encrypted &amp; verified</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">ABA KHQR &amp; COD</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">100% encrypted &amp; verified</p>
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+              <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400">
                 <RotateCcw className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">30-Day Easy Returns</h4>
-                <p className="text-[11px] text-slate-500">Hassle-free size exchange</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">30-Day Easy Returns</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Hassle-free size exchange</p>
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+              <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400">
                 <Headphones className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">24/7 Client Care</h4>
-                <p className="text-[11px] text-slate-500">Dedicated styling assistance</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">24/7 Client Care</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Dedicated styling assistance</p>
               </div>
             </div>
           </div>
@@ -201,20 +201,20 @@ export const HomePage: React.FC = () => {
       <LightningDeals products={featuredProducts} />
 
       {/* 3. Shop by Category Grid */}
-      <section className="py-16 bg-slate-50">
+      <section className="py-16 bg-slate-50 dark:bg-slate-950 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
             <div>
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
+              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
                 Collections
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
                 Shop By Category
               </h2>
             </div>
             <Link
               href="/shop"
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 group"
             >
               Browse All Categories
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -226,7 +226,7 @@ export const HomePage: React.FC = () => {
               <Link
                 key={cat.id}
                 href={`/shop?category=${cat.slug}`}
-                className="group relative rounded-3xl overflow-hidden aspect-[4/5] bg-slate-900 shadow-sm border border-slate-200"
+                className="group relative rounded-3xl overflow-hidden aspect-[4/5] bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800"
               >
                 <img
                   src={cat.display_image}
@@ -245,14 +245,14 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 4. Trending Fashion Pieces Grid */}
-      <section className="py-10 sm:py-16 bg-white border-t border-slate-200/80">
+      <section className="py-10 sm:py-16 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800 transition-colors">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-10 gap-3">
             <div>
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
+              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
                 Trending Now
               </span>
-              <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+              <h2 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
                 Curated Fashion Essentials
               </h2>
             </div>

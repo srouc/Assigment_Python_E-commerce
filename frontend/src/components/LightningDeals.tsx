@@ -61,7 +61,7 @@ export const LightningDeals: React.FC<LightningDealsProps> = ({ products }) => {
   };
 
   return (
-    <section className="py-10 sm:py-16 bg-gradient-to-b from-amber-500/5 via-slate-50 to-white border-y border-amber-500/20 relative overflow-hidden">
+    <section className="py-10 sm:py-16 bg-gradient-to-b from-amber-500/5 via-slate-50 to-white dark:from-amber-500/10 dark:via-slate-950 dark:to-slate-900 border-y border-amber-500/20 relative overflow-hidden transition-colors">
       {/* Background ambient glow */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-72 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 blur-3xl pointer-events-none" />
 
@@ -143,10 +143,10 @@ export const LightningDeals: React.FC<LightningDealsProps> = ({ products }) => {
             return (
               <div
                 key={p.id}
-                className="group relative flex flex-col bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-amber-200/80 hover:border-amber-400 shadow-sm hover:shadow-xl transition-all duration-300"
+                className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl overflow-hidden border border-amber-200/80 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-xl transition-all duration-300"
               >
                 {/* Deal Image Frame */}
-                <Link href={`/product/${p.slug}`} className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 block">
+                <Link href={`/product/${p.slug}`} className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800 block">
                   <img
                     src={p.display_image}
                     alt={p.name}
@@ -172,18 +172,18 @@ export const LightningDeals: React.FC<LightningDealsProps> = ({ products }) => {
                 {/* Details Content */}
                 <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between space-y-3">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block mb-0.5">
                       {p.brand || 'ShopEase'}
                     </span>
                     <Link href={`/product/${p.slug}`}>
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {p.name}
                       </h3>
                     </Link>
 
                     {/* Price Block */}
                     <div className="flex items-baseline gap-2 mt-1.5">
-                      <span className="text-sm sm:text-base font-black text-rose-600">
+                      <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
                         ${Number(p.price).toFixed(2)}
                       </span>
                       <span className="text-xs text-slate-400 line-through">
@@ -193,18 +193,18 @@ export const LightningDeals: React.FC<LightningDealsProps> = ({ products }) => {
                   </div>
 
                   {/* Limited Stock Progress Bar */}
-                  <div className="space-y-1.5 pt-1 border-t border-slate-100">
+                  <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-slate-500 font-medium flex items-center gap-1">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
                         <Flame className="w-3 h-3 text-amber-500" />
-                        <strong className="text-slate-800">{claimPct}%</strong> Claimed
+                        <strong className="text-slate-800 dark:text-slate-200">{claimPct}%</strong> Claimed
                       </span>
-                      <span className="text-rose-600 font-bold text-[10px]">
+                      <span className="text-rose-600 dark:text-rose-400 font-bold text-[10px]">
                         Only {Math.max(2, 20 - idx * 4)} Left
                       </span>
                     </div>
 
-                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full transition-all duration-1000"
                         style={{ width: `${claimPct}%` }}
@@ -216,7 +216,7 @@ export const LightningDeals: React.FC<LightningDealsProps> = ({ products }) => {
                   <button
                     type="button"
                     onClick={(e) => handleQuickAdd(e, p)}
-                    className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95 group/btn"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95 group/btn"
                   >
                     <Zap className="w-3.5 h-3.5 text-amber-400 group-hover/btn:scale-110 transition-transform" />
                     Grab Deal

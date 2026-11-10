@@ -94,9 +94,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : null;
 
   return (
-    <div className="group relative flex flex-col bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/80 hover:border-indigo-400 hover:shadow-xl transition-all duration-300">
+    <div className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-xl transition-all duration-300">
       {/* Product Image Frame */}
-      <Link href={`/product/${product.slug}`} className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100">
+      <Link href={`/product/${product.slug}`} className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
         <img
           src={product.display_image}
           alt={product.name}
@@ -137,20 +137,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           {/* Product Title */}
-          <Link href={`/product/${product.slug}`} className="group-hover:text-indigo-600 transition-colors">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1 leading-snug">
+          <Link href={`/product/${product.slug}`} className="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 leading-snug">
               {product.name}
             </h3>
           </Link>
 
           {/* Short description */}
-          <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1 mt-0.5 hidden xs:block">
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5 hidden xs:block">
             {product.short_description}
           </p>
         </div>
 
         {/* Available Sizes & Colors Preview */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px] sm:text-[11px]">
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] sm:text-[11px]">
           {/* Color Dots */}
           <div className="flex items-center gap-1 sm:gap-1.5">
             {product.colors?.slice(0, 4).map((c, idx) => {
@@ -182,7 +182,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex items-center justify-between pt-0.5 sm:pt-1">
           <div className="flex items-center gap-1 sm:gap-1.5">
             <RatingStars rating={Number(product.rating)} size={11} />
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-600">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-400">
               {Number(product.rating).toFixed(1)}
             </span>
           </div>
@@ -193,7 +193,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 ${formattedComparePrice}
               </span>
             )}
-            <span className="text-xs sm:text-base font-black text-slate-900">
+            <span className="text-xs sm:text-base font-black text-slate-900 dark:text-white">
               ${formattedPrice}
             </span>
           </div>

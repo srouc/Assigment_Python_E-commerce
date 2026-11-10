@@ -25,14 +25,14 @@ export const MobileBottomNav: React.FC = () => {
   const isAdminPath = currentPath.startsWith('/admin');
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-1.5 px-3 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+    <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 py-1.5 px-3 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-colors">
       <div className="flex items-center justify-around">
         
         {/* Home */}
         <Link
           href="/"
           className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all ${
-            isHome ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+            isHome ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
           }`}
         >
           <Home className={`w-5 h-5 ${isHome ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
@@ -43,7 +43,7 @@ export const MobileBottomNav: React.FC = () => {
         <Link
           href="/shop"
           className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all ${
-            isShop ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+            isShop ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
           }`}
         >
           <Grid className={`w-5 h-5 ${isShop ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />

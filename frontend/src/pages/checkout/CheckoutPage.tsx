@@ -18,6 +18,7 @@ import { useToast } from '../../context/ToastContext';
 import { orderService } from '../../services/orderService';
 import { couponService } from '../../services/couponService';
 import { authService } from '../../services/authService';
+import { KHQRModal } from '../../components/KHQRModal';
 
 export const CheckoutPage: React.FC = () => {
   const router = useRouter();
@@ -40,6 +41,8 @@ export const CheckoutPage: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderComplete, setOrderComplete] = useState<any>(null);
+  const [showKHQRModal, setShowKHQRModal] = useState(false);
+  const [pendingKHQROrder, setPendingKHQROrder] = useState<any>(null);
 
   // Auto-fill addresses if user has saved addresses
   useEffect(() => {
@@ -106,14 +109,38 @@ export const CheckoutPage: React.FC = () => {
         notes: notes || undefined,
       });
 
-      setOrderComplete(order);
       await refreshCart();
-      showToast(`Order ${order.order_number} placed successfully!`, 'success');
+
+      if (paymentMethod === 'aba_khqr') {
+        setPendingKHQROrder(order);
+        setShowKHQRModal(true);
+      } else {
+        setOrderComplete(order);
+        showToast(`Order ${order.order_number} placed successfully!`, 'success');
+      }
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to place order. Please check stock.';
       showToast(msg, 'error');
     } finally {
       setPlacingOrder(false);
+    }
+  };
+
+  const handleKHQRPaymentSuccess = async () => {
+    if (pendingKHQROrder) {
+      try {
+        await orderService.updateOrderStatusAdmin(pendingKHQROrder.id, 'processing', 'paid');
+      } catch {
+        // local fallback
+      }
+      setOrderComplete({
+        ...pendingKHQROrder,
+        payment_status: 'paid',
+        payment_status_display: 'Paid via ABA KHQR',
+      });
+      setShowKHQRModal(false);
+      setPendingKHQROrder(null);
+      showToast('Payment confirmed! Order processed.', 'success');
     }
   };
 
@@ -461,6 +488,20 @@ export const CheckoutPage: React.FC = () => {
 
         </form>
       </div>
+
+      {/* Real Bakong KHQR Payment Modal */}
+      <KHQRModal
+        isOpen={showKHQRModal}
+        onClose={() => {
+          setShowKHQRModal(false);
+          if (pendingKHQROrder) {
+            setOrderComplete(pendingKHQROrder);
+          }
+        }}
+        onPaymentSuccess={handleKHQRPaymentSuccess}
+        amount={pendingKHQROrder ? pendingKHQROrder.total_amount : total}
+        orderNumber={pendingKHQROrder ? pendingKHQROrder.order_number : undefined}
+      />
     </MainLayout>
   );
 };

@@ -126,6 +126,17 @@ export const Navbar: React.FC = () => {
                 <Palette className="w-3.5 h-3.5 text-indigo-500" />
                 UI/UX Design
               </Link>
+              <Link
+                href="/khqr"
+                className={`inline-flex items-center gap-1.5 py-1 transition-colors hover:text-red-600 ${
+                  router.pathname === '/khqr' ? 'text-red-600 font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-red-600 after:rounded-full' : ''
+                }`}
+              >
+                <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black tracking-wider">
+                  KHQR
+                </span>
+                Pay
+              </Link>
               {isAuthenticated && (
                 <Link
                   href="/orders"
@@ -279,6 +290,14 @@ export const Navbar: React.FC = () => {
                 >
                   <Palette className="w-4 h-4 text-indigo-500" />
                   UI/UX Design System
+                </Link>
+                <Link
+                  href="/khqr"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-3 py-2 rounded-xl text-red-600 font-bold hover:bg-red-50 flex items-center gap-2"
+                >
+                  <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black">KHQR</span>
+                  Bakong KHQR Generator
                 </Link>
                 {isAuthenticated && (
                   <Link

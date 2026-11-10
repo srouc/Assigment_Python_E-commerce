@@ -13,8 +13,10 @@ import {
   Clock,
   Truck,
   XCircle,
+  Send,
 } from 'lucide-react';
 import { AdminLayout } from '../../layouts/AdminLayout';
+import { TelegramModal } from '../../components/TelegramModal';
 import { productService } from '../../services/productService';
 import { orderService } from '../../services/orderService';
 import { couponService } from '../../services/couponService';
@@ -45,6 +47,7 @@ export const AdminDashboard: React.FC = () => {
 
   // New Coupon Form
   const [showCouponModal, setShowCouponModal] = useState(false);
+  const [showTelegramModal, setShowTelegramModal] = useState(false);
   const [newCouponCode, setNewCouponCode] = useState('');
   const [newCouponType, setNewCouponType] = useState<'percentage' | 'fixed'>('percentage');
   const [newCouponVal, setNewCouponVal] = useState('10');
@@ -179,7 +182,13 @@ export const AdminDashboard: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setShowTelegramModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-xl text-xs font-bold transition-colors"
+            >
+              <Send className="w-4 h-4" /> Telegram Bot
+            </button>
             <button
               onClick={() => setShowProductModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-colors shadow-lg shadow-indigo-600/20"
@@ -610,6 +619,12 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Telegram Bot Settings Modal */}
+      <TelegramModal
+        isOpen={showTelegramModal}
+        onClose={() => setShowTelegramModal(false)}
+      />
 
     </AdminLayout>
   );

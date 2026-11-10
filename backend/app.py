@@ -13,6 +13,9 @@ from database import db
 from flask_models import (
     User, Category, Product, Order, Cart, CartItem, Coupon, Review, parse_json
 )
+from telegram_service import (
+    send_order_telegram_notification, load_telegram_config, save_telegram_config, send_test_telegram_message
+)
 
 jwt = JWTManager()
 
@@ -1000,7 +1003,14 @@ def create_app():
                 CartItem.query.filter_by(cart_id=cart.id).delete()
                 db.session.commit()
 
-                return jsonify(order.to_dict()), 201
+                order_dict = order.to_dict()
+                try:
+                    event_type = 'paid' if order.payment_status == 'paid' else 'created'
+                    send_order_telegram_notification(order_dict, event_type=event_type)
+                except Exception as tg_err:
+                    print(f"[Telegram Notification Error] {tg_err}")
+
+                return jsonify(order_dict), 201
             except Exception as e:
                 db.session.rollback()
                 return jsonify({'detail': f'Order creation failed: {str(e)}'}), 500
@@ -1056,10 +1066,70 @@ def create_app():
                 order.payment_status = data['payment_status']
 
             db.session.commit()
-            return jsonify(order.to_dict()), 200
+
+            order_dict = order.to_dict()
+            try:
+                if data.get('payment_status') == 'paid':
+                    send_order_telegram_notification(order_dict, event_type='paid')
+            except Exception as tg_err:
+                print(f"[Telegram Notification Error] {tg_err}")
+
+            return jsonify(order_dict), 200
         except Exception as e:
             db.session.rollback()
             return jsonify({'detail': f'Status update failed: {str(e)}'}), 500
+
+    # --------------------------------------------------------------------------
+    # Telegram Bot Notification Endpoints (/api/telegram/...)
+    # --------------------------------------------------------------------------
+    @app.route('/api/telegram/config/', methods=['GET', 'POST'])
+    def telegram_config():
+        if request.method == 'GET':
+            cfg = load_telegram_config()
+            token = cfg.get('bot_token', '')
+            masked = f"{token[:4]}...{token[-4:]}" if len(token) > 8 else (token if token else '')
+            return jsonify({
+                'configured': bool(token and cfg.get('chat_id')),
+                'bot_token_masked': masked,
+                'chat_id': cfg.get('chat_id', ''),
+                'enabled': cfg.get('enabled', True)
+            }), 200
+
+        data = request.get_json() or {}
+        bot_token = data.get('bot_token')
+        chat_id = data.get('chat_id')
+        enabled = data.get('enabled', True)
+
+        # If token wasn't changed (was sent as masked), keep existing
+        cfg = load_telegram_config()
+        if bot_token and '...' in bot_token:
+            bot_token = cfg.get('bot_token', '')
+        elif not bot_token:
+            bot_token = cfg.get('bot_token', '')
+
+        success, msg = save_telegram_config(bot_token, chat_id, enabled)
+        if success:
+            return jsonify({'message': msg, 'configured': bool(bot_token and chat_id)}), 200
+        return jsonify({'detail': msg}), 400
+
+    @app.route('/api/telegram/test/', methods=['POST'])
+    def telegram_test():
+        data = request.get_json() or {}
+        bot_token = data.get('bot_token')
+        chat_id = data.get('chat_id')
+
+        cfg = load_telegram_config()
+        if bot_token and '...' in bot_token:
+            bot_token = cfg.get('bot_token')
+        if not bot_token:
+            bot_token = cfg.get('bot_token')
+        if not chat_id:
+            chat_id = cfg.get('chat_id')
+
+        success, msg = send_test_telegram_message(bot_token, chat_id)
+        if success:
+            return jsonify({'ok': True, 'message': 'Test notification sent successfully to Telegram!'}), 200
+        return jsonify({'ok': False, 'detail': msg}), 400
 
     # --------------------------------------------------------------------------
     # Reviews Endpoints (/api/reviews/...)

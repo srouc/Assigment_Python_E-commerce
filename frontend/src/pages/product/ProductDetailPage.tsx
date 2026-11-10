@@ -63,9 +63,11 @@ const resolveColorHex = (c: any): string => {
     return COLOR_MAP[trimmed] || '#475569';
   }
   if (typeof c === 'object') {
-    if (c.hex && typeof c.hex === 'string') return c.hex;
-    if (c.name && typeof c.name === 'string') {
-      const trimmed = c.name.trim().toLowerCase();
+    const hex = c.hex || c.code || c.value;
+    if (hex && typeof hex === 'string') return hex.trim();
+    const name = c.name || c.color || c.label;
+    if (name && typeof name === 'string') {
+      const trimmed = name.trim().toLowerCase();
       return COLOR_MAP[trimmed] || '#475569';
     }
   }
@@ -74,8 +76,11 @@ const resolveColorHex = (c: any): string => {
 
 const resolveColorName = (c: any): string => {
   if (!c) return 'Standard';
-  if (typeof c === 'string') return c;
-  if (typeof c === 'object' && c.name) return String(c.name);
+  if (typeof c === 'string') return c.trim() || 'Standard';
+  if (typeof c === 'object') {
+    const name = c.name || c.label || c.color || c.hex;
+    if (name && typeof name === 'string') return name.trim() || 'Standard';
+  }
   return 'Standard';
 };
 
@@ -265,7 +270,7 @@ export default function ProductDetailPage() {
                         const colName = resolveColorName(colorItem);
                         const colHex = resolveColorHex(colorItem);
                         const isSelected = selectedColor === colName;
-                        const isLightColor = ['#FDFBF7', '#FDE68A', '#FFFFFF'].includes(colHex.toUpperCase());
+                        const isLightColor = ['#FDFBF7', '#FDE68A', '#FFFFFF'].includes(String(colHex || '').toUpperCase());
                         return (
                           <button
                             key={colName || idx}

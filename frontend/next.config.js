@@ -2,34 +2,26 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    unoptimized: true,
+    domains: [
+      'images.pexels.com',
+      'images.unsplash.com',
+      'res.cloudinary.com',
+      'images.ctfassets.net',
+      'tailwindui.com',
+      '127.0.0.1',
+      'localhost',
+    ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**',
+        pathname: '/**',
       },
       {
         protocol: 'http',
         hostname: '**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.pexels.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
+        pathname: '/**',
       },
     ],
   },

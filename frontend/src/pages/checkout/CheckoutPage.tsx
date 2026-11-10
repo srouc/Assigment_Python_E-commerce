@@ -35,7 +35,7 @@ export const CheckoutPage: React.FC = () => {
   const [shippingPostalCode, setShippingPostalCode] = useState('12000');
   const [shippingCountry, setShippingCountry] = useState('Cambodia');
   const [guestEmail, setGuestEmail] = useState(user?.email || '');
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card' | 'aba_khqr' | 'paypal'>('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card' | 'aba_khqr' | 'paypal'>('aba_khqr');
   const [couponCode, setCouponCode] = useState<string>((queryCoupon as string) || '');
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [notes, setNotes] = useState('');
@@ -317,7 +317,39 @@ export const CheckoutPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 
-                {/* Cash on Delivery */}
+                {/* 1. ABA KHQR Mobile Banking (Primary & Recommended) */}
+                <label
+                  className={`relative flex items-start gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === 'aba_khqr'
+                      ? 'border-red-600 bg-red-50/40 shadow-sm ring-2 ring-red-600/10'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="aba_khqr"
+                    checked={paymentMethod === 'aba_khqr'}
+                    onChange={() => setPaymentMethod('aba_khqr')}
+                    className="mt-1 text-red-600 focus:ring-red-500"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                        <QrCode className="w-4 h-4 text-red-600" />
+                        ABA KHQR / Mobile
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-black uppercase tracking-wider">
+                        Fast &amp; Free
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 mt-0.5 block">
+                      Auto-alerts scannable Bakong KHQR for ABA Mobile &amp; all bank apps.
+                    </span>
+                  </div>
+                </label>
+
+                {/* 2. Cash on Delivery */}
                 <label
                   className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
                     paymentMethod === 'cod'
@@ -336,31 +368,6 @@ export const CheckoutPage: React.FC = () => {
                   <div>
                     <span className="text-sm font-bold text-slate-800 block">Cash On Delivery (COD)</span>
                     <span className="text-xs text-slate-500">Pay in cash upon doorstep arrival.</span>
-                  </div>
-                </label>
-
-                {/* ABA KHQR Mobile Banking */}
-                <label
-                  className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
-                    paymentMethod === 'aba_khqr'
-                      ? 'border-indigo-600 bg-indigo-50/50 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="aba_khqr"
-                    checked={paymentMethod === 'aba_khqr'}
-                    onChange={() => setPaymentMethod('aba_khqr')}
-                    className="mt-1 text-indigo-600"
-                  />
-                  <div>
-                    <span className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                      <QrCode className="w-4 h-4 text-emerald-600" />
-                      ABA KHQR / Mobile
-                    </span>
-                    <span className="text-xs text-slate-500">Instant scan with any mobile banking app.</span>
                   </div>
                 </label>
 
@@ -421,12 +428,13 @@ export const CheckoutPage: React.FC = () => {
               {items.map((item) => (
                 <div key={item.id} className="py-3 flex items-center gap-3">
                   <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                    <Image
+                    <img
                       src={item.product.display_image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}
                       alt={item.product.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500';
+                      }}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -474,10 +482,32 @@ export const CheckoutPage: React.FC = () => {
             <button
               type="submit"
               disabled={placingOrder || items.length === 0}
-              className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 transition-all"
+              className={`w-full py-4 px-6 rounded-2xl text-white font-bold text-sm shadow-xl flex items-center justify-center gap-2 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 transition-all ${
+                paymentMethod === 'aba_khqr'
+                  ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 shadow-red-600/25'
+                  : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+              }`}
             >
-              {placingOrder ? 'Processing Order...' : `Place Order ($${total.toFixed(2)})`}
-              <ArrowRight className="w-4 h-4" />
+              {placingOrder ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {paymentMethod === 'aba_khqr' ? 'Generating Real KHQR...' : 'Processing Order...'}
+                </>
+              ) : (
+                <>
+                  {paymentMethod === 'aba_khqr' ? (
+                    <>
+                      <QrCode className="w-4 h-4" />
+                      Place Order &amp; Pay via KHQR (${total.toFixed(2)})
+                    </>
+                  ) : (
+                    <>
+                      Place Order (${total.toFixed(2)})
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </>
+              )}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-xs text-slate-400">

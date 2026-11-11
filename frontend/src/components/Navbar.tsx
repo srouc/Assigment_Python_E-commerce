@@ -120,6 +120,14 @@ export const Navbar: React.FC = () => {
               >
                 Shop All
               </Link>
+              <Link
+                href="/presentation"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-bold border border-indigo-200 dark:border-indigo-500/30 hover:bg-indigo-500/20 hover:scale-105 transition-all shadow-sm"
+                title="Open Interactive Presentation Slides"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
+                📽️ Slides
+              </Link>
               {isAuthenticated && (
                 <Link
                   href="/orders"
@@ -299,6 +307,16 @@ export const Navbar: React.FC = () => {
                   className="px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Shop Catalog
+                </Link>
+                <Link
+                  href="/presentation"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-3 py-2.5 rounded-xl font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <span>📽️</span> Project Presentation Slides
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-600 text-white font-mono">10 Slides</span>
                 </Link>
                 {isAuthenticated && (
                   <Link

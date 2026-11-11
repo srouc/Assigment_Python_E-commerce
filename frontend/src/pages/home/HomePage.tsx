@@ -93,10 +93,19 @@ export const HomePage: React.FC = () => {
                 </Link>
 
                 <Link
-                  href="/shop?category=outerwear"
-                  className="w-full sm:w-auto px-6 py-3.5 sm:py-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-sm backdrop-blur-md flex items-center justify-center gap-2 transition-all"
+                  href="/presentation"
+                  className="w-full sm:w-auto px-5 py-3.5 sm:py-4 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-300 font-bold text-sm backdrop-blur-md flex items-center justify-center gap-2 shadow-sm transition-all"
+                  title="View Interactive Project Presentation Slides"
                 >
-                  <Tag className="w-4 h-4 text-amber-400" />
+                  <span>📽️</span>
+                  Slide Presentation
+                </Link>
+
+                <Link
+                  href="/shop?category=outerwear"
+                  className="w-full sm:w-auto px-5 py-3.5 sm:py-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-sm backdrop-blur-md flex items-center justify-center gap-2 transition-all"
+                >
+                  <Tag className="w-4 h-4 text-slate-300" />
                   Outerwear &amp; Coats
                 </Link>
               </div>
